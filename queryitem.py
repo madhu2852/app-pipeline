@@ -1,6 +1,5 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
-import json
 
 table = boto3.resource('dynamodb').Table('dev-ports')
 
@@ -11,8 +10,6 @@ response = table.query(
 )
 
 if 'Items' in response and len(response['Items']) == 1:
-    response = json.loads(response['Items'][0])
-    available_port = response.get('portnum')
-    print(available_port)
+    response = response['Items'][0]
 
-print(response['Items'][0])
+print(response['Items'][0].get('portnum'))
