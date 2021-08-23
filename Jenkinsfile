@@ -45,8 +45,7 @@ pipeline {
                         export PATH=~/.local/bin:$PATH
                         pip3 install pipenv --user
                         pipenv update
-                        pipenv run python3 ./queryitem.py > test.txt
-                        cat test.txt
+                        pipenv run python3 ./queryitem.py
                     '''    
                 }
             }
