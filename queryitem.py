@@ -12,5 +12,7 @@ response = table.query(
 
 if 'Items' in response and len(response['Items']) == 1:
     response = json.loads(response['Items'][0])
+    available_port = response.get('portnum')
 
-print(response['Items'][0])
+#print(response['Items'][0])
+print(available_port)
