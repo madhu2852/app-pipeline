@@ -37,27 +37,16 @@ pipeline {
     }
     // environment {
     // }
-    stages {
-        stage('get Available Port Number From Dynamodb Table') {
-            environment {
-                env = "${JENKINS_USER_ID}"
-                ddb_Table = "${PATH_PREFIX}"
-            }
-            steps {
-                    sh '''
-                        export PATH=~/.local/bin:$PATH
-                        pip3 install pipenv --user
-                    '''
-            }
-        }
-        stage('hello AWS') {
+    stages {        
+        stage('get port number from ddb_Table') {
             steps {
                 withAWS(credentials: 'aws-credentials', region: 'us-east-1') {
                     sh '''
-                    aws dynamodb query \
-                        --table-name dev-ports \
-                        --index-name StateIndex \
-                        --key-condition-expression "port_state = a"
+                        export PATH=~/.local/bin:$PATH
+                        pip3 install pipenv --user
+                        pipenv update
+                        pipenv run python3 ./queryitem.py > test.txt
+                        cat test.txt
                     '''    
                 }
             }
