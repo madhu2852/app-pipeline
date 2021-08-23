@@ -1,7 +1,7 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import json
-
+available_port = {}
 table = boto3.resource('dynamodb').Table('dev-ports')
 
 #queries dynamodb table looking for port_state equal to 'a' or available and returns next available port that can be assigned
