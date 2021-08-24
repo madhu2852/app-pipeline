@@ -72,6 +72,7 @@ pipeline {
             steps {
                 sh '''
                     env 
+                    terraform init &&\
                     terraform plan
                     '''
                 }
