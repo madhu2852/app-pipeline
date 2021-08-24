@@ -2,7 +2,7 @@
 import sys
 import boto3
 
-table = boto3.resource('dynamodb').Table('dev-ports')
+table = boto3.resource('dynamodb',region_name='us-east-1').Table('dev-ports')
 
 #update single record with fqdn & port_state
 if str(sys.argv[1]) == "provision":
