@@ -1,7 +1,7 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 
-
+String listern_arn_pub_alb_dev = 'testarn'
 
 pipeline {
     agent any
@@ -13,7 +13,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID = credentials('secret-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('access-key') 
-        available_port = """${sh(
+        TF_VAR_available_port = """${sh(
                 returnStdout: true,
                 script: '''
                     set +x
@@ -41,25 +41,38 @@ pipeline {
         )
         choice(
             name: 'ENVIRONMENT',
-            choices: ['DEV', 'STG', 'PRD'],
-            description: '''Jenvironment to deploy the app''',
+            choices: ['dev', 'stg', 'prd'],
+            description: '''environment to deploy the app''',
         )
     }
     stages {        
         stage('Preparation') {
             steps {
                 script {
-                    env.APP_FQDN = env.APP_FQDN
-                    env.CONTACT = env.CONTACT
-                    env.CERTIFICATE_ARN = env.CERTIFICATE_ARN
+                    env.TF_VAR_APP_FQDN = env.APP_FQDN
+                    env.TF_VAR_CONTACT = env.CONTACT
+                    env.TF_VAR_CERTIFICATE_ARN = env.CERTIFICATE_ARN
+                    switch(env.ENVIRONMENT) {
+                        case 'DEV':
+                            env.TF_VAR_LISTENER_ARN = "${listern_arn_pub_alb_dev}"
+                            break
+                        case 'STG':
+                            env.TF_VAR_LISTENER_ARN = "${listern_arn_pub_alb_stg}"
+                            break
+                        case 'PRD':
+                            env.TF_VAR_LISTENER_ARN = "${listern_arn_pub_alb_prd}"
+                            break
+                        default:
+                            error('Listener ARN Required')
+                    }
                 }
             }
-        }        
+        } 
         stage('Configure AWS Services (terraform apply)') {
             steps {
                 sh '''
-                    export port_num=$available_port
-                    echo "here is the number: $port_num"
+                    env 
+                    terraform plan
                     '''
                 }
             }
@@ -70,7 +83,7 @@ pipeline {
                     export PATH=~/.local/bin:$PATH
                     pip3 install pipenv --user > /dev/null
                     pipenv update > /dev/null
-                    pipenv run python3 ./updateitem.py provision $available_port ${APP_FQDN}
+                    pipenv run python3 ./updateitem.py provision $TF_VAR_available_port ${TF_VAR_APP_FQDN}
                     '''
                 }
             }
