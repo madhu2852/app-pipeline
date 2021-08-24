@@ -26,41 +26,36 @@ pipeline {
     }
     parameters {
         string(
-            name: 'app_name',
-            description: 'application Name',
+            name: 'APP_FQDN',
+            description: 'application fqdn',
             trim: true,
         )
         string(
-            name: 'app_owner',
+            name: 'CERTIFICATE_ARN',
             description: '''application owner''',
         )
         string(
-            name: 'app_owner_email',
+            name: 'CONTACT',
             description: 'Email Address - required',
             trim: true,
         )
-        string(
-            name: 'app_cert_arn',
-            description: 'Cert ARN - required',
-            trim: true,
-        )
         choice(
-            name: 'env',
+            name: 'ENVIRONMENT',
             choices: ['dev', 'stg', 'prd'],
             description: '''Jenvironment to deploy the app''',
-        )        
-
+        )
     }
     stages {        
         stage('Preparation') {
             steps {
                 script {
-                    env.app_name = env.app_name
-                    env.app_owner = env.app_owner
+                    env.APP_FQDN = env.APP_FQDN
+                    env.CONTACT = env.CONTACT
+                    env.CERTIFICATE_ARN = env.CERTIFICATE_ARN
                 }
             }
         }        
-        stage('get port number from ddb_Table') {
+        stage('Configure AWS Services (terraform apply)') {
             steps {
                 sh '''
                     export port_num=$available_port
@@ -68,18 +63,18 @@ pipeline {
                     '''
                 }
             }
-        stage('update app with metadata') {
+        stage('add metadata and reserve port in Dynamodb Table') {
             steps {
                 sh '''
                     set +x
                     export PATH=~/.local/bin:$PATH
                     pip3 install pipenv --user > /dev/null
                     pipenv update > /dev/null
-                    pipenv run python3 ./updateitem.py provision $available_port ${app_name} ${app_owner}
+                    pipenv run python3 ./updateitem.py provision $available_port ${APP_FQDN}
                     '''
                 }
             }
-        stage('update dynamodb table with app metadata') {
+        stage('clean up jenkins workspace') {
             steps {
                 script {
                     cleanWs()
