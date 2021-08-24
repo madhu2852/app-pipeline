@@ -4,7 +4,7 @@ provider "aws" {
 ### CREATE TARGET GROUP FOR THE APP ###
 
 resource "aws_lb_target_group" "public_alb_app" {
-  name     = "pub-alb-app-${var.APP_FQDN}"
+  name     = "pub-alb-app-${var.available_port}"
   port     = tonumber(var.available_port)
   protocol = "HTTP"
   target_type = "instance"
