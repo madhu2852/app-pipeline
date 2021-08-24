@@ -41,7 +41,7 @@ pipeline {
         )
         choice(
             name: 'ENVIRONMENT',
-            choices: ['dev', 'stg', 'prd'],
+            choices: ['DEV', 'STG', 'PRD'],
             description: '''Jenvironment to deploy the app''',
         )
     }
