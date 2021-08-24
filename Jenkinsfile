@@ -55,7 +55,6 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    cleanWs()
                     env.app_name = env.app_name
                     env.app_owner = env.app_owner
                 }
