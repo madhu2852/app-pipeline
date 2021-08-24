@@ -15,4 +15,5 @@ data "aws_instances" "public_alb_palo_alto" {
     name   = "tag:Name"
     values = ["firewall_instances-2","firewall_instances-1"]
   }
+  instance_state_names = ["running"]
 }
