@@ -52,6 +52,15 @@ pipeline {
 
     }
     stages {        
+        stage('Preparation') {
+            steps {
+                script {
+                    cleanWs()
+                    env.app_name = env.app_name
+                    env.app_owner = env.app_owner
+                }
+            }
+        }        
         stage('get port number from ddb_Table') {
             steps {
                 sh '''
@@ -67,7 +76,7 @@ pipeline {
                     export PATH=~/.local/bin:$PATH
                     pip3 install pipenv --user > /dev/null
                     pipenv update > /dev/null
-                    pipenv run python3 ./updateitem.py provision $available_port ${env.app_name} ${env.app_owner}
+                    pipenv run python3 ./updateitem.py provision $available_port ${app_name} ${app_owner}
                     '''
                 }
             }
