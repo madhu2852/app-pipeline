@@ -1,8 +1,6 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 
-String listern_arn_pub_alb_dev = 'testarn'
-
 pipeline {
     agent any
     options {
@@ -39,6 +37,10 @@ pipeline {
             description: 'Email Address - required',
             trim: true,
         )
+        string(
+            name: 'LISTENER_ARN',
+            description: '''application owner''',
+        )        
         choice(
             name: 'ENVIRONMENT',
             choices: ['DEV', 'STG', 'PRD'],
@@ -54,13 +56,13 @@ pipeline {
                     env.TF_VAR_CERTIFICATE_ARN = env.CERTIFICATE_ARN
                     switch(env.ENVIRONMENT) {
                         case 'DEV':
-                            env.TF_VAR_LISTENER_ARN = "${listern_arn_pub_alb_dev}"
+                            env.TF_VAR_LISTENER_ARN = "${env.LISTENER_ARN}"
                             break
                         case 'STG':
-                            env.TF_VAR_LISTENER_ARN = "${listern_arn_pub_alb_stg}"
+                            env.TF_VAR_LISTENER_ARN = "${env.LISTENER_ARN}"
                             break
                         case 'PRD':
-                            env.TF_VAR_LISTENER_ARN = "${listern_arn_pub_alb_prd}"
+                            env.TF_VAR_LISTENER_ARN = "${env.LISTENER_ARN}"
                             break
                         default:
                             error('Listener ARN Required')
