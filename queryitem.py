@@ -1,7 +1,7 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
-table = boto3.resource('dynamodb').Table('dev-ports')
+table = boto3.resource('dynamodb',region_name='us-east-1').Table('dev-ports')
 
 #queries dynamodb table looking for port_state equal to 'a' or available and returns next available port that can be assigned
 response = table.query(
