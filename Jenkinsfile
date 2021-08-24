@@ -1,6 +1,8 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 
+String PORT_NUM = null
+
 pipeline {
     agent any
     options {
@@ -41,12 +43,16 @@ pipeline {
         stage('get port number from ddb_Table') {
             steps {
                 withAWS(credentials: 'aws-credentials', region: 'us-east-1') {
-                    sh '''
+                    PORT_NUM = sh(script: '''
                         export PATH=~/.local/bin:$PATH
                         pip3 install pipenv --user
                         pipenv update
-                        pipenv run python3 ./queryitem.py
-                    '''    
+                        PORT_NUM=$(pipenv run python3 ./queryitem.py)
+                        echo $PORT_NUM
+                    ''',
+                    returnStdout: true
+                    ).trim()
+                    echo "${PORT_NUM}"
                 }
             }
         }            
