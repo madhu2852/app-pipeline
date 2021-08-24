@@ -22,7 +22,7 @@ pipeline {
                     pipenv update > /dev/null
                     pipenv run python3 ./queryitem.py
                 '''    
-            )}"""
+            ).trim()}"""
     }
     parameters {
         string(
