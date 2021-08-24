@@ -60,13 +60,17 @@ pipeline {
                     '''
                 }
             }
-        stage('Create AWS ELB resources for the app') {
+        stage('update app with metadata') {
             steps {
-                script {
-                    cleanWs()
+                sh '''
+                    set +x
+                    export PATH=~/.local/bin:$PATH
+                    pip3 install pipenv --user > /dev/null
+                    pipenv update > /dev/null
+                    pipenv run python3 ./updateitem.py
+                    '''
                 }
             }
-        }
         stage('update dynamodb table with app metadata') {
             steps {
                 script {
