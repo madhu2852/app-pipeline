@@ -1,3 +1,6 @@
+provider "aws" {
+  region = "us-east-1"
+}
 ### CREATE TARGET GROUP FOR THE APP ###
 
 resource "aws_lb_target_group" "public_alb_app" {
