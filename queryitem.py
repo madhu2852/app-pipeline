@@ -43,7 +43,7 @@ def main():
     if options.env == 'DEV':
         port = "8000"
     elif options.env  == "STG":
-        port = "12000"
+        port = "10000"
     elif options.env == "PRD":
         port = "12000"
     else:
