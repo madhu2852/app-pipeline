@@ -84,6 +84,15 @@ pipeline {
                 }
             }
         stage('add metadata and reserve port in Dynamodb Table') {
+            environment {
+                INTERNAL_APP_CERTIFICATE_TAG_NAME = """${sh(
+                returnStdout: true,
+                script: '''
+                    terraform output public_elb
+                '''    
+            ).trim()}"""
+            }
+            
             steps {
                 sh '''
                     set +x
