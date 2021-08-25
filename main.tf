@@ -21,7 +21,7 @@ resource "aws_lb_target_group" "public_alb_app" {
 ### CREATE LISTENER RULE FOR THE APP ###
 
 resource "aws_lb_listener_rule" "public_alb_lstnr_rule_app" {
-  listener_arn = var.LISTENER_ARN
+  listener_arn = var.PUBLIC_ALB_LSTNR_NAME
   action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.public_alb_app.arn
