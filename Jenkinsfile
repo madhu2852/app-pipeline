@@ -10,17 +10,7 @@ pipeline {
     }
     environment {
         AWS_ACCESS_KEY_ID = credentials('secret-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('access-key') 
-        TF_VAR_available_port = """${sh(
-                returnStdout: true,
-                script: '''
-                    set +x
-                    export PATH=~/.local/bin:$PATH
-                    pip3 install pipenv --user > /dev/null
-                    pipenv update > /dev/null
-                    pipenv run python3 ./queryitem.py
-                '''    
-            ).trim()}"""
+        AWS_SECRET_ACCESS_KEY = credentials('access-key')
     }
     parameters {
         string(
@@ -37,10 +27,6 @@ pipeline {
             description: 'Email Address - required',
             trim: true,
         )
-        // string(
-        //     name: 'LISTENER_ARN',
-        //     description: '''application owner''',
-        // )        
         choice(
             name: 'ENVIRONMENT',
             choices: ['DEV', 'STG', 'PRD'],
@@ -74,6 +60,20 @@ pipeline {
             }
         } 
         stage('Configure AWS Services (terraform apply)') {
+            environment {
+                
+                TF_VAR_available_port = """${sh(
+                    returnStdout: true,
+                    script: '''
+                        set +x
+                        export PATH=~/.local/bin:$PATH
+                        pip3 install pipenv --user > /dev/null
+                        pipenv update > /dev/null
+                        pipenv run python3 ./queryitem.py
+                    '''    
+                        ).trim()}"""
+                }
+            
             steps {
                 sh '''
                     env 
@@ -84,13 +84,30 @@ pipeline {
                 }
             }
         stage('add metadata and reserve port in Dynamodb Table') {
+            
             environment {
-                INTERNAL_APP_CERTIFICATE_TAG_NAME = """${sh(
+                
+                PUBLIC_ALB_ARN = """${sh(
                 returnStdout: true,
                 script: '''
                     terraform output -json public_elb | jq -r '.[0]'
                 '''    
             ).trim()}"""
+            
+                INTERNAL_CERT_ARN = """${sh(
+                returnStdout: true,
+                script: '''
+                    terraform output -json internal_app_cert | jq -r '.[0]'
+                '''    
+            ).trim()}"""
+            
+                PUBLIC_ALB_LISTENER = """${sh(
+                returnStdout: true,
+                script: '''
+                    terraform output -json public_elb_lstnr | jq -r '.[0]'
+                '''    
+            ).trim()}"""
+  
             }
             
             steps {
