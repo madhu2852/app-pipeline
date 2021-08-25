@@ -92,10 +92,13 @@ pipeline {
             }
         stage('clean up jenkins workspace') {
             steps {
-                sh '''
-                    echo "stage completed"
-                    env
-                   ''' 
+                TF_VAR_available_port_1 = """${sh(
+                    returnStdout: true,
+                    script: '''
+                            set +x
+                            echo "This works"
+                        '''    
+            ).trim()}"""
             }
         }
     }    
