@@ -28,19 +28,19 @@ pipeline {
             description: 'application fqdn',
             trim: true,
         )
-        string(
-            name: 'CERTIFICATE_ARN',
-            description: '''application owner''',
-        )
+        // string(
+        //     name: 'CERTIFICATE_ARN',
+        //     description: '''application owner''',
+        // )
         string(
             name: 'CONTACT',
             description: 'Email Address - required',
             trim: true,
         )
-        string(
-            name: 'LISTENER_ARN',
-            description: '''application owner''',
-        )        
+        // string(
+        //     name: 'LISTENER_ARN',
+        //     description: '''application owner''',
+        // )        
         choice(
             name: 'ENVIRONMENT',
             choices: ['DEV', 'STG', 'PRD'],
@@ -53,16 +53,19 @@ pipeline {
                 script {
                     env.TF_VAR_APP_FQDN = env.APP_FQDN
                     env.TF_VAR_CONTACT = env.CONTACT
-                    env.TF_VAR_CERTIFICATE_ARN = env.CERTIFICATE_ARN
+                    // env.TF_VAR_CERTIFICATE_ARN = env.CERTIFICATE_ARN
                     switch(env.ENVIRONMENT) {
                         case 'DEV':
-                            env.TF_VAR_LISTENER_ARN = "${env.LISTENER_ARN}"
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
                             break
                         case 'STG':
-                            env.TF_VAR_LISTENER_ARN = "${env.LISTENER_ARN}"
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
                             break
                         case 'PRD':
-                            env.TF_VAR_LISTENER_ARN = "${env.LISTENER_ARN}"
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
                             break
                         default:
                             error('Listener ARN Required')
