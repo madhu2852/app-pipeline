@@ -78,8 +78,8 @@ pipeline {
                 sh '''
                     env 
                     terraform init &&\
-                    #terraform apply --auto-approve
-                    terraform refresh
+                    terraform apply --auto-approve
+                    #terraform refresh
                     '''
                 }
             }
