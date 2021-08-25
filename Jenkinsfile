@@ -120,10 +120,10 @@ pipeline {
                     '''
                 }
             }
-        stage('clean up jenkins workspace') {
-            steps {
-                sh ''' echo "works great!" '''
-            }
+        }
+    post {
+        cleanup {
+            cleanWs(cleanWhenAborted: false)
         }
     }    
 }
