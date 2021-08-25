@@ -44,14 +44,20 @@ pipeline {
                         case 'DEV':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
+                            env.REGION = "us-east-1"
+                            env.DDB_TABLE = "dev-ports"
                             break
                         case 'STG':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
+                            env.REGION = "us-east-1"
+                            env.DDB_TABLE = "dev-ports"
                             break
                         case 'PRD':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
+                            env.REGION = "us-east-1"
+                            env.DDB_TABLE = "dev-ports"                        
                             break
                         default:
                             error('Listener ARN Required')
@@ -69,7 +75,7 @@ pipeline {
                         export PATH=~/.local/bin:$PATH
                         pip3 install pipenv --user > /dev/null
                         pipenv update > /dev/null
-                        pipenv run python3 ./queryitem.py
+                        pipenv run python3 ./queryitem.py --env=${ENVIRONMENT} --region=${REGION} --table_name=${DDB_TABLE}
                     '''    
                         ).trim()}"""
                 }
