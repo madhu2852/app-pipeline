@@ -2,7 +2,6 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from optparse import OptionParser
 import logging
-from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -27,7 +26,7 @@ def update_metadata(region,table_name,portnum,fqdn):
     try:
         table = boto3.resource('dynamodb',region_name=region).Table(table_name)
         client = boto3.client('ssm')
-    except botocore.exceptions.ClientError as e:
+    except Exception as e:
         print(e.response)
 
     update = table.update_item(
