@@ -92,8 +92,9 @@ pipeline {
             }
         stage('clean up jenkins workspace') {
             steps {
-                script {
-                }
+                sh '''
+                    echo "stage completed"
+                   ''' 
             }
         }
     }    
