@@ -58,3 +58,14 @@ data "aws_resourcegroupstaggingapi_resources" "load_balancer_lstnr" {
     values = [var.PUBLIC_ALB_LSTNR_NAME]
   }
 }
+
+## INTERNAL APP CERT LOOKUP BY TAG NAME ##
+data "aws_resourcegroupstaggingapi_resources" "internal_cert" {
+  resource_type_filters = ["acm:certificate"]
+
+  tag_filter {
+    key    = "Name"
+    values = [var.INTERNAL_CERT_TAG_NAME_VALUE]
+  }
+}
+
