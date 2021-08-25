@@ -17,3 +17,44 @@ data "aws_instances" "public_alb_palo_alto" {
   }
   instance_state_names = ["running"]
 }
+
+## Public ALB ARN ##
+
+
+# data "aws_resourcegroupstaggingapi_resources" "load_balancer" {
+#   resource_type_filters = ["elasticloadbalancing:loadbalancer"]
+
+#   tag_filter {
+#     key    = "Name"
+#     values = ["public-alb-dev","public-alb-stg"]
+#   }
+# }
+
+data "aws_resourcegroupstaggingapi_resources" "load_balancer" {
+  resource_type_filters = ["elasticloadbalancing:loadbalancer"]
+
+  tag_filter {
+    key    = "Name"
+    values = [var.PUBLIC_ALB_NAME]
+  }
+}
+
+## Public ALB LISTENER ARN ##
+
+# data "aws_resourcegroupstaggingapi_resources" "load_balancer_lstnr" {
+#   resource_type_filters = ["elasticloadbalancing:listener"]
+
+#   tag_filter {
+#     key    = "Name"
+#     values = ["public-alb-lstnr-dev","public-alb-lstnr-stg"]
+#   }
+# }
+
+data "aws_resourcegroupstaggingapi_resources" "load_balancer_lstnr" {
+  resource_type_filters = ["elasticloadbalancing:listener"]
+
+  tag_filter {
+    key    = "Name"
+    values = [var.PUBLIC_ALB_LSTNR_NAME]
+  }
+}
