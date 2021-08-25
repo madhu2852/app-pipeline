@@ -28,10 +28,10 @@ pipeline {
             description: 'application fqdn',
             trim: true,
         )
-        // string(
-        //     name: 'CERTIFICATE_ARN',
-        //     description: '''application owner''',
-        // )
+        string(
+            name: 'INTERNAL_APP_CERTIFICATE_TAG_NAME',
+            description: '''application owner''',
+        )
         string(
             name: 'CONTACT',
             description: 'Email Address - required',
@@ -53,7 +53,7 @@ pipeline {
                 script {
                     env.TF_VAR_APP_FQDN = env.APP_FQDN
                     env.TF_VAR_CONTACT = env.CONTACT
-                    // env.TF_VAR_CERTIFICATE_ARN = env.CERTIFICATE_ARN
+                    env.TF_VAR_INTERNAL_APP_CERTIFICATE_TAG_NAME = env.INTERNAL_APP_CERTIFICATE_TAG_NAME
                     switch(env.ENVIRONMENT) {
                         case 'DEV':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
