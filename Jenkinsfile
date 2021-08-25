@@ -75,6 +75,9 @@ pipeline {
                 }
             
             steps {
+                script {
+                    env.TF_VAR_available_port = "${TF_VAR_available_port}"
+                  }
                 sh '''
                     env 
                     terraform init &&\
