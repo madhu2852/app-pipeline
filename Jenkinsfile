@@ -90,7 +90,7 @@ pipeline {
                     export PATH=~/.local/bin:$PATH
                     pip3 install pipenv --user > /dev/null
                     pipenv update > /dev/null
-                    pipenv run python3 ./updateitem.py provision $TF_VAR_available_port ${TF_VAR_APP_FQDN}
+                    pipenv run python3 ./updateitem.py provision $TF_VAR_available_port ${INTERNAL_APP_CERTIFICATE_TAG_NAME}
                     '''
                 }
             }
