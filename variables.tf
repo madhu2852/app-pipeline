@@ -8,5 +8,3 @@ variable "PUBLIC_ALB_LSTNR_NAME" {
 }
 variable "CERTIFICATE_ARN" {
 }
-variable "ENVIRONMENT" {
-}
