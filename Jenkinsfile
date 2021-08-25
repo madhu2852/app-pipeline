@@ -94,6 +94,7 @@ pipeline {
             steps {
                 sh '''
                     echo "stage completed"
+                    env
                    ''' 
             }
         }
