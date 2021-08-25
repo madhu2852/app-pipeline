@@ -93,7 +93,6 @@ pipeline {
         stage('clean up jenkins workspace') {
             steps {
                 script {
-                    cleanWs()
                 }
             }
         }
