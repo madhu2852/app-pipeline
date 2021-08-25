@@ -121,7 +121,6 @@ pipeline {
             
             steps {
                 sh '''
-                    set +x
                     export PATH=~/.local/bin:$PATH
                     pip3 install pipenv --user > /dev/null
                     pipenv update > /dev/null
