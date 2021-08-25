@@ -1,54 +1,66 @@
-
-import sys
 import boto3
+from boto3.dynamodb.conditions import Key, Attr
+from optparse import OptionParser
+import logging
+from botocore.exceptions import ClientError
 
-table = boto3.resource('dynamodb',region_name='us-east-1').Table('dev-ports')
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
-#update single record with fqdn & port_state
-if str(sys.argv[1]) == "provision":
-    response = table.update_item(
+def get_configs():
+    parser = OptionParser()
+    parser.add_option("--env", "--env",dest="env",help="environment to get the available port",default=None)
+    parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
+    parser.add_option("--table_name", "--table_name",dest="table_name",help="dynamodb table name to query",default=None)
+    parser.add_option("--portnum", "--portnum",dest="portnum",help="assigned port number",default=None)
+    parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of application",default=None)
+
+    (options, args) = parser.parse_args()
+    try:
+        options.map = json.loads(options.map)
+    except:
+        options.map = None
+    return options
+
+
+def update_metadata(region,table_name,portnum,fqdn):
+    try:
+        table = boto3.resource('dynamodb',region_name=region).Table(table_name)
+        client = boto3.client('ssm')
+    except botocore.exceptions.ClientError as e:
+        print(e.response)
+
+    update = table.update_item(
         Key={
-            'portnum': str(sys.argv[2])
+            'portnum': portnum
         },
         UpdateExpression="set fqdn = :f, port_state = :s",
         ExpressionAttributeValues={
-            ':f': str(sys.argv[3]),
+            ':f': fqdn,
             ':s': 'p'
-        },
-        ReturnValues="UPDATED_NEW"
+        }
     )
-    print("Record# "+str(sys.argv[2]) + " added fqdn - " + str(sys.argv[3]))
-
-#print('Number of arguments:', len(sys.argv), 'arguments.')
-#print('Argument List:', str(sys.argv[1]))
-
-#clear single record fqdn & port_state
-if str(sys.argv[1]) == "clear":
-    response = table.update_item(
-        Key={
-            'portnum': str(sys.argv[2])
-        },
-        UpdateExpression=("SET port_state = :s REMOVE fqdn"),
-        ExpressionAttributeValues={
-            ':s': 'a'
-        },
-        ReturnValues="UPDATED_NEW"
+    response = client.put_parameter(
+        Name=fqdn,
+        Value=portnum,
+        Type='String'
     )
-    print("Record# "+str(sys.argv[2]) + " cleared")
+    return update,response
 
-#NOT IN USE - Just an example
-"""
-#Bulk update
-for x in range(8000, 8019):
-    response = table.update_item(
-        Key={
-            'portnum': str(x)
-        },
-        UpdateExpression="set port_state = :s",
-        ExpressionAttributeValues={
-            ':s': 'a'
-        },
-        ReturnValues="UPDATED_NEW"
-)
-print("Record updated")
-"""
+def main():
+
+    global options
+    options = get_configs()
+
+    try:
+        metadata = update_metadata(options.region,options.table_name,options.portnum,options.fqdn)
+        message = "Successfully updated metadata to Dynamodb and SSM"
+        logger.info(message)
+        return metadata
+
+    except Exception as e:
+        message = 'FAILED: Script Failed to Execute {}'.format(e)
+        return message
+
+if __name__ == "__main__":
+     print(main())
