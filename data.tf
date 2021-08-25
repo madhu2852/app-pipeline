@@ -65,7 +65,7 @@ data "aws_resourcegroupstaggingapi_resources" "internal_cert" {
 
   tag_filter {
     key    = "Name"
-    values = [var.INTERNAL_CERT_TAG_NAME_VALUE]
+    values = [var.INTERNAL_APP_CERTIFICATE_TAG_NAME]
   }
 }
 
