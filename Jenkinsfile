@@ -88,7 +88,7 @@ pipeline {
                 INTERNAL_APP_CERTIFICATE_TAG_NAME = """${sh(
                 returnStdout: true,
                 script: '''
-                    terraform output public_elb
+                    terraform output -json public_elb | jq -r '.[0]'
                 '''    
             ).trim()}"""
             }
