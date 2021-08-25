@@ -25,7 +25,7 @@ def get_configs():
 def update_metadata(region,table_name,portnum,fqdn):
     try:
         table = boto3.resource('dynamodb',region_name=region).Table(table_name)
-        client = boto3.client('ssm')
+        client = boto3.client('ssm',region_name=region)
     except Exception as e:
         print(e.response)
 
