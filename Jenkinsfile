@@ -9,8 +9,19 @@ pipeline {
         disableConcurrentBuilds()
     }
     environment {
+        
         AWS_ACCESS_KEY_ID = credentials('secret-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('access-key')
+        PIP_ENV = """${sh(
+                    returnStdout: true,
+                    script: '''
+                        set +x
+                        export PATH=~/.local/bin:$PATH
+                        pip3 install pipenv --user > /dev/null
+                        pipenv update > /dev/null
+                        pipenv install boto3 > /dev/null
+                    '''    
+                        ).trim()}"""        
     }
     parameters {
         string(
@@ -67,15 +78,11 @@ pipeline {
         } 
         stage('Configure AWS Services (terraform apply)') {
             environment {
-                
                 TF_VAR_available_port = """${sh(
                     returnStdout: true,
                     script: '''
                         set +x
                         export PATH=~/.local/bin:$PATH
-                        pip3 install pipenv --user > /dev/null
-                        pipenv update > /dev/null
-                        pipenv install boto3 > /dev/null
                         pipenv run python3 ./queryitem.py --env=${ENVIRONMENT} --region=${REGION} --table_name=${DDB_TABLE}
                     '''    
                         ).trim()}"""
@@ -123,9 +130,7 @@ pipeline {
             steps {
                 sh '''
                     export PATH=~/.local/bin:$PATH
-                    pip3 install pipenv --user > /dev/null
-                    pipenv update > /dev/null
-                    pipenv run python3 ./updateitem.py --region=${REGION} --table_name=${DDB_TABLE} --portnum ${TF_VAR_available_port} --fqdn ${APP_FQDN}
+                    pipenv run python3 ./updateitem.py --region=${REGION} --table_name=${DDB_TABLE} --portnum=${TF_VAR_available_port} --fqdn=${APP_FQDN}
                     '''
                 }
             }
