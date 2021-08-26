@@ -75,6 +75,7 @@ pipeline {
                         export PATH=~/.local/bin:$PATH
                         pip3 install pipenv --user > /dev/null
                         pipenv update > /dev/null
+                        pipenv install boto3 > /dev/null
                         pipenv run python3 ./queryitem.py --env=${ENVIRONMENT} --region=${REGION} --table_name=${DDB_TABLE}
                     '''    
                         ).trim()}"""
