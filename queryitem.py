@@ -41,13 +41,16 @@ def main():
 
     if options.env == 'DEV':
         port = "8000"
-        env = "dev"
+        ENV = options.env
+        env = ENV.lower()
     elif options.env  == "STG":
         port = "10000"
-        env = "stg"
+        ENV = options.env
+        env = ENV.lower()
     elif options.env == "PRD":
         port = "12000"
-        env = "prd"
+        ENV = options.env
+        env = ENV.lower()
     else:
         message = 'FAILED: Invalid environment input'
         logger.error(message)
