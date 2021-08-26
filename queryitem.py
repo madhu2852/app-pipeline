@@ -20,14 +20,13 @@ def get_configs():
     return options
 
 
-def query_ddb_next_avail_port(region,table_name,port):
+def query_ddb_next_avail_port(region,table_name,port,env):
     try:
         table = boto3.resource('dynamodb',region_name=region).Table(table_name)
     except botocore.exceptions.ClientError as e:
         print(e.response)
-
     response = table.query(
-        IndexName='StateIndex',
+        IndexName=env+'-StateIndex',
         KeyConditionExpression=Key('port_state').eq('a')& Key('portnum').gte(port)
     )
     if 'Items' in response and len(response['Items']) == 1:
@@ -42,16 +41,19 @@ def main():
 
     if options.env == 'DEV':
         port = "8000"
+        env = "dev"
     elif options.env  == "STG":
         port = "10000"
+        env = "stg"
     elif options.env == "PRD":
         port = "12000"
+        env = "prd"
     else:
         message = 'FAILED: Invalid environment input'
         logger.error(message)
 
     try:
-        available_port = query_ddb_next_avail_port(options.region,options.table_name,port)
+        available_port = query_ddb_next_avail_port(options.region,options.table_name,port,env)
         return available_port
 
     except Exception as e:
