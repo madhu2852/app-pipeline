@@ -19,8 +19,8 @@ pipeline {
             trim: true,
         )
         string(
-            name: 'INTERNAL_APP_CERTIFICATE_TAG_NAME',
-            description: '''application owner''',
+            name: 'APP_CERT_NAME',
+            description: '''application certificate name - use Tag Name: Value''',
         )
         string(
             name: 'CONTACT',
