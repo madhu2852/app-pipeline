@@ -37,7 +37,8 @@ def update_metadata(region,table_name,portnum,fqdn):
         ExpressionAttributeValues={
             ':f': fqdn,
             ':s': 'p'
-        }
+        },
+        ReturnValues="UPDATED_NEW"
     )
     response = client.put_parameter(
         Name=fqdn,
