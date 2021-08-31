@@ -60,7 +60,7 @@ pipeline {
         stage('Cleanup AWS Resources') {            
             steps {
                 script {
-                   env.RAW_DATA = "test"
+                   env.RAW_test_DATA = "test"
                   }
                 sh '''
                     env 
