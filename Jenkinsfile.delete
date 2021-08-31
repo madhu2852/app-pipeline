@@ -1,0 +1,106 @@
+pipeline {
+    agent any
+    options {
+        timestamps()
+        buildDiscarder(logRotator(daysToKeepStr: '90'))
+        disableConcurrentBuilds()
+    }
+    environment {
+        
+        AWS_ACCESS_KEY_ID = credentials('secret-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('access-key')
+        PIP_ENV = """${sh(
+                    returnStdout: true,
+                    script: '''
+                        set +x
+                        export PATH=~/.local/bin:$PATH
+                        pip3 install pipenv --user > /dev/null
+                        pipenv update > /dev/null
+                        pipenv install boto3 > /dev/null
+                    '''    
+                        ).trim()}"""   
+    }
+    parameters {
+        string(
+            name: 'APP_FQDN',
+            description: 'application fqdn',
+            trim: true,
+        )
+        string(
+            name: 'REGION',
+            description: 'application fqdn',
+            trim: true,
+            default: 'us-east-1'
+        )
+
+    }
+    stages {        
+        stage('Preparation') { // GET THE LOAB BALANCER NAME, PORT and, CERT TO DELETE
+
+            environment {
+                RAW_DATA = """${sh(
+                    returnStdout: true,
+                    script: '''
+                        set +x
+                        export PATH=~/.local/bin:$PATH
+                        pipenv run python3 ./get_item.py --region=${REGION} --fqdn=${APP_FQDN}
+                    '''    
+                        ).trim()}"""
+                }
+            }
+            steps {
+                sh '''
+                     echo ${RAW_DATA}
+                    '''
+                }
+        } 
+        stage('Cleanup AWS Resources') {            
+            steps {
+                script {
+                    env.TF_VAR_available_port = "${TF_VAR_available_port}"
+                  }
+                sh '''
+                    env 
+                    '''
+                }
+            }
+        stage('Release and update the metadata in Dynamodb') {
+            
+            // environment {
+                
+            //     PUBLIC_ALB_ARN = """${sh(
+            //     returnStdout: true,
+            //     script: '''
+            //         terraform output -json public_elb | jq -r '.[0]'
+            //     '''    
+            // ).trim()}"""
+            
+            //     INTERNAL_CERT_ARN = """${sh(
+            //     returnStdout: true,
+            //     script: '''
+            //         terraform output -json internal_app_cert | jq -r '.[0]'
+            //     '''    
+            // ).trim()}"""
+            
+            //     PUBLIC_ALB_LISTENER = """${sh(
+            //     returnStdout: true,
+            //     script: '''
+            //         terraform output -json public_elb_lstnr | jq -r '.[0]'
+            //     '''    
+            // ).trim()}"""
+  
+            // }
+            
+            steps {
+                sh '''
+                        env
+                    '''
+                }
+            }
+        }
+    post {
+        cleanup {
+            cleanWs(cleanWhenAborted: false)
+        }
+    }    
+}
