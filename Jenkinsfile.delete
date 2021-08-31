@@ -59,6 +59,8 @@ pipeline {
                  env.PORT = jsonObj.port
                  env.LISTENER_RULE_ARN = jsonObj.lstnr_rule_arn
                  env.TG_GROUP_ARN = jsonObj.target_grp_arn
+                 env.FQDN = jsonObj.fqdn
+                 env.DDB_TABLE = jsonObj.table_name
                 }
             }
         } 
@@ -66,45 +68,14 @@ pipeline {
             steps {
                 sh '''
                     export PATH=~/.local/bin:$PATH
-                    pipenv run python3 ./delete_items.py --listener_rule_arn=${LISTENER_RULE_ARN}
+                    pipenv run python3 ./delete_items.py \
+                        --listener_rule_arn=${LISTENER_RULE_ARN} \
+                        --target_group_arn=${TG_GROUP_ARN} \
+                        --portnum=${PORT} \
+                        --fqdn=${FQDN} \
+                        --region=${REGION}
+                        --table_name=${DDB_TABLE}
                  '''
-                sh '''
-                    export PATH=~/.local/bin:$PATH
-                    pipenv run python3 ./delete_items.py --target_group_arn=${TG_GROUP_ARN}
-                 '''
-                }
-            }
-        stage('Release and update the metadata in Dynamodb') {
-            
-            // environment {
-                
-            //     PUBLIC_ALB_ARN = """${sh(
-            //     returnStdout: true,
-            //     script: '''
-            //         terraform output -json public_elb | jq -r '.[0]'
-            //     '''    
-            // ).trim()}"""
-            
-            //     INTERNAL_CERT_ARN = """${sh(
-            //     returnStdout: true,
-            //     script: '''
-            //         terraform output -json internal_app_cert | jq -r '.[0]'
-            //     '''    
-            // ).trim()}"""
-            
-            //     PUBLIC_ALB_LISTENER = """${sh(
-            //     returnStdout: true,
-            //     script: '''
-            //         terraform output -json public_elb_lstnr | jq -r '.[0]'
-            //     '''    
-            // ).trim()}"""
-  
-            // }
-            
-            steps {
-                sh '''
-                        env
-                    '''
                 }
             }
         }
