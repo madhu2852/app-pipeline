@@ -30,7 +30,7 @@ pipeline {
             name: 'REGION',
             description: 'application fqdn',
             trim: true,
-            default: 'us-east-1'
+            defaultValue: 'us-east-1'
         )
 
     }
