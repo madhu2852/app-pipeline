@@ -1,3 +1,6 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurperClassic
+
 pipeline {
     agent any
     options {
@@ -49,11 +52,14 @@ pipeline {
                 }
             steps {
                 script {
-                   env.RAW_DATA = "${RAW_DATA_ENV}"
+                 def response = null
+                 response = "${RAW_DATA_ENV}"
+                 env.PORT = new JsonSlurperClassic().parseText(
+                            response.content,
+                        ).data.port
                   }
-            
                 sh '''
-                     echo ${RAW_DATA}
+                     echo ${PORT}
                     '''
                 }
         } 
