@@ -45,7 +45,7 @@ def update_ddb_ssm(region,table_name,portnum,fqdn):
         ddb_table = boto3.resource('dynamodb',region_name=region).Table(table_name)
         ssm_client = boto3.client('ssm',region_name=region)
     except Exception as e:
-        print(e.response)
+        raise Exception(e)
 
 
     update_ddb = ddb_table.update_item(
