@@ -27,7 +27,7 @@ def get_configs():
     return options
 
 
-def update_metadata(region,table_name,portnum,fqdn,lstnr_rule_arn,cert,env,alb,target_grp_arn):
+def update_metadata(region,table_name,portnum,fqdn,alb,cert,target_grp_arn,env,lstnr_rule_arn):
     try:
         table = boto3.resource('dynamodb',region_name=region).Table(table_name)
         client = boto3.client('ssm',region_name=region)
@@ -45,13 +45,16 @@ def update_metadata(region,table_name,portnum,fqdn,lstnr_rule_arn,cert,env,alb,t
         },
         ReturnValues="UPDATED_NEW"
     )
-    json_data = { 
-            "port": portnum, 
-            "lstnr_rule_arn": lstnr_rule_arn,
-            "cert": cert,
-            "environment": env,
+    json_data = {
+            "region": region,
+            "table_name": table_name,
+            "port": portnum,
+            "fqdn": fqdn,
             "alb": alb,
+            "cert": cert,
             "target_grp_arn": target_grp_arn,
+            "environment": env,
+            "lstnr_rule_arn": lstnr_rule_arn,
         }
     response = client.put_parameter(
         Name=fqdn,
