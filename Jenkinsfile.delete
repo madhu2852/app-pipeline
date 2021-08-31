@@ -56,7 +56,7 @@ pipeline {
         stage('Cleanup AWS Resources') {            
             steps {
                 script {
-                    env.TF_VAR_available_port = "${TF_VAR_available_port}"
+                    // env.TF_VAR_available_port = "${TF_VAR_available_port}"
                   }
                 sh '''
                     env 
