@@ -12,7 +12,7 @@ def get_configs():
     parser.add_option("--target_group_arn", "--target_group_arn",dest="target_group_arn",help="dynamodb region",default=None)
     parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
     parser.add_option("--portnum", "--portnum",dest="portnum",help="assigned port number",default=None)
-    parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the application",default=None)
+    # parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the application",default=None)
     parser.add_option("--table_name", "--table_name",dest="table_name",help="dynamodb table name to query",default=None)
 
 
@@ -39,11 +39,10 @@ def delete_aws_resources(listener_rule_arn,target_group_arn):
     return delete_lstnr_rule,delete_tg_grp
 
 
-def update_ddb_ssm(region,table_name,portnum,fqdn):
+def update_ddb_ssm(region,table_name,portnum):
 
     try:
         ddb_table = boto3.resource('dynamodb',region_name=region).Table(table_name)
-        ssm_client = boto3.client('ssm',region_name=region)
     except Exception as e:
         raise Exception(e)
 
@@ -57,13 +56,7 @@ def update_ddb_ssm(region,table_name,portnum,fqdn):
             ':s': 'a'
         },
     )
-
-    update_ssm = ssm_client.put_parameter(
-        Name=fqdn,
-        Description='not-in-use',
-    )
-
-    return update_ddb,update_ssm
+    return update_ddb
 
 def main():
 
@@ -72,7 +65,7 @@ def main():
 
     try:
         remove_aws = delete_aws_resources(options.listener_rule_arn,options.target_group_arn)
-        update_metadata_ddb_ssm = update_ddb_ssm(options.region,options.table_name,options.portnum,options.fqdn)
+        update_metadata_ddb_ssm = update_ddb_ssm(options.region,options.table_name,options.portnum)
 
         return remove_aws,update_metadata_ddb_ssm
 
