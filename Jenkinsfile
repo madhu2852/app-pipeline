@@ -129,14 +129,14 @@ pipeline {
                 LISTENER_ARN = """${sh(
                 returnStdout: true,
                 script: '''
-                    terraform output -json lstnr_rule_arn | jq -r '.[0]'
+                    terraform output -json lstnr_rule_arn | jq -r '.'
                 '''    
             ).trim()}"""
             
                 TARGET_GROUP_ARN = """${sh(
                 returnStdout: true,
                 script: '''
-                    terraform output -json target_group_arn | jq -r '.[0]'
+                    terraform output -json target_group_arn | jq -r '.'
                 '''    
             ).trim()}"""
             
