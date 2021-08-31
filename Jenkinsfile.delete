@@ -47,7 +47,6 @@ pipeline {
                     '''    
                         ).trim()}"""
                 }
-            }
             steps {
                 sh '''
                      echo ${RAW_DATA}
