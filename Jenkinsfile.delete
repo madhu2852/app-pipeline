@@ -38,7 +38,7 @@ pipeline {
         stage('Preparation') { // GET THE LOAB BALANCER NAME, PORT and, CERT TO DELETE
 
             environment {
-                env.RAW_DATA_ENV = """${sh(
+                RAW_DATA_ENV = """${sh(
                     returnStdout: true,
                     script: '''
                         set +x
@@ -48,6 +48,10 @@ pipeline {
                         ).trim()}"""
                 }
             steps {
+                script {
+                   env.RAW_DATA = "${RAW_DATA_ENV}"
+                  }
+            
                 sh '''
                      echo ${RAW_DATA}
                     '''
