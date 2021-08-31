@@ -11,6 +11,12 @@ def get_configs():
     parser.add_option("--listener_rule_arn", "--listener_rule_arn",dest="listener_rule_arn",help="fqdn of the app to remove",default=None)
     parser.add_option("--target_group_arn", "--target_group_arn",dest="target_group_arn",help="dynamodb region",default=None)
     parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
+    parser.add_option("--portnum", "--portnum",dest="portnum",help="assigned port number",default=None)
+    parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the application",default=None)
+    parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
+    parser.add_option("--table_name", "--table_name",dest="table_name",help="dynamodb table name to query",default=None)
+
+
     (options, args) = parser.parse_args()
     try:
         options.map = json.loads(options.map)
@@ -24,18 +30,41 @@ except Exception as e:
     message = 'FAILED: Unable to establish connection to ELB - {}'.format(e)
     raise Exception(message) 
 
-def delete_aws_resources_listener_rule(listener_rule_arn):
-    response = client.delete_rule(
+def delete_aws_resources(listener_rule_arn,target_group_arn):
+    delete_lstnr_rule = client.delete_rule(
         RuleArn=str(listener_rule_arn)
     )
-    return response
-
-
-def delete_aws_resources_target_group(target_group_arn):
-    response = client.delete_target_group(
+    delete_tg_grp = client.delete_target_group(
         TargetGroupArn=str(target_group_arn)
     )
-    return response
+    return delete_lstnr_rule,delete_tg_grp
+
+
+def update_ddb_ssm(region,table_name,portnum,fqdn):
+
+    try:
+        ddb_table = boto3.resource('dynamodb',region_name=region).Table(table_name)
+        ssm_client = boto3.client('ssm',region_name=region)
+    except Exception as e:
+        print(e.response)
+
+
+    update_ddb = ddb_table.update_item(
+        Key={
+            'portnum': portnum
+        },
+        UpdateExpression=("SET port_state = :s REMOVE fqdn"),
+        ExpressionAttributeValues={
+            ':s': 'a'
+        },
+    )
+
+    update_ssm = ssm_client.put_parameter(
+        Name=fqdn,
+        Description='not-in-use',
+    )
+
+    return update_ddb,update_ssm
 
 def main():
 
@@ -43,14 +72,10 @@ def main():
     options = get_configs()
 
     try:
-        if (options.target_group_arn):
-            remove = delete_aws_resources_target_group(options.target_group_arn)
-            message = remove
-        if  (options.listener_rule_arn):
-            remove = delete_aws_resources_listener_rule(options.listener_rule_arn)
-            message = remove
+        remove_aws = delete_aws_resources(options.listener_rule_arn,options.target_group_arn)
+        update_metadata_ddb_ssm = update_ddb_ssm(options.region,options.table_name,options.portnum,options.fqdn)
 
-        return message
+        return remove_aws,update_metadata_ddb_ssm
 
     except Exception as e:
         message = 'FAILED: Script Failed to Execute {}'.format(e)
