@@ -104,6 +104,7 @@ pipeline {
             
             environment {
                 
+                
                 PUBLIC_ALB_ARN = """${sh(
                 returnStdout: true,
                 script: '''
@@ -124,11 +125,26 @@ pipeline {
                     terraform output -json public_elb_lstnr | jq -r '.[0]'
                 '''    
             ).trim()}"""
-  
+            
+                LISTENER_ARN = """${sh(
+                returnStdout: true,
+                script: '''
+                    terraform output -json lstnr_rule_arn | jq -r '.[0]'
+                '''    
+            ).trim()}"""
+            
+                TARGET_GROUP_ARN = """${sh(
+                returnStdout: true,
+                script: '''
+                    terraform output -json target_group_arn | jq -r '.[0]'
+                '''    
+            ).trim()}"""
+            
             }
             
             steps {
                 sh '''
+                    env
                     export PATH=~/.local/bin:$PATH
                     pipenv run python3 ./updateitem.py --region=${REGION} --table_name=${DDB_TABLE} --portnum=${TF_VAR_available_port} --fqdn=${APP_FQDN}
                     '''
