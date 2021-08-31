@@ -146,7 +146,11 @@ pipeline {
                 sh '''
                     env
                     export PATH=~/.local/bin:$PATH
-                    pipenv run python3 ./updateitem.py --region=${REGION} --table_name=${DDB_TABLE} --portnum=${TF_VAR_available_port} --fqdn=${APP_FQDN} --env=${ENVIRONMENT} --lstnr_rule_arn=${LISTENER_RULE_ARN} --cert=${INTERNAL_CERT_ARN} --alb=${PUBLIC_ALB_ARN} --target_grp_arn=${TARGET_GROUP_ARN} 
+                    pipenv run python3 ./updateitem.py --region=${REGION} --table_name=${DDB_TABLE} \
+                        --portnum=${TF_VAR_available_port} --fqdn=${APP_FQDN} \
+                        --alb=${PUBLIC_ALB_ARN} --cert=${INTERNAL_CERT_ARN}  \
+                        --target_grp_arn=${TARGET_GROUP_ARN} \
+                        --env=${env.ENVIRONMENT} --lstnr_rule_arn=${LISTENER_RULE_ARN}
                     '''
                 }
             }
