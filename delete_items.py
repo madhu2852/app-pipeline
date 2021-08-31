@@ -13,7 +13,6 @@ def get_configs():
     parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
     parser.add_option("--portnum", "--portnum",dest="portnum",help="assigned port number",default=None)
     parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the application",default=None)
-    parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
     parser.add_option("--table_name", "--table_name",dest="table_name",help="dynamodb table name to query",default=None)
 
 
