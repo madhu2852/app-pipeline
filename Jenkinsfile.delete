@@ -72,7 +72,6 @@ pipeline {
                         --listener_rule_arn=${LISTENER_RULE_ARN} \
                         --target_group_arn=${TG_GROUP_ARN} \
                         --portnum=${PORT} \
-                        --fqdn=${FQDN} \
                         --region=${REGION} \
                         --table_name=${DDB_TABLE}
                  '''
