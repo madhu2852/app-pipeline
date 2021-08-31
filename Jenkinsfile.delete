@@ -57,14 +57,21 @@ pipeline {
                  env.APP_ENVIRONMENT = jsonObj.env
                  env.CERT = jsonObj.cert
                  env.PORT = jsonObj.port
+                 env.LISTENER_RULE_ARN = jsonObj.lstnr_rule_arn
+                 env.TG_GROUP_ARN = jsonObj.target_grp_arn
                 }
             }
         } 
         stage('Cleanup AWS Resources') {            
             steps {
-                sh ''' echo "Remove Listener Rule" '''
-                sh ''' echo "Remove Target Group" '''
-                sh ''' echo "Remove Imported Cert from Listener" '''
+                sh '''
+                    export PATH=~/.local/bin:$PATH
+                    pipenv run python3 ./delete_items.py --lstnr_rule_arn=${LISTENER_RULE_ARN}
+                 '''
+                sh '''
+                    export PATH=~/.local/bin:$PATH
+                    pipenv run python3 ./delete_items.py --target_group_arn=${TG_GROUP_ARN}
+                 '''
                 }
             }
         stage('Release and update the metadata in Dynamodb') {
