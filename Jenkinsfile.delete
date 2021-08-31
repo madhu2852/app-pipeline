@@ -41,7 +41,7 @@ pipeline {
         stage('Preparation') { // GET THE LOAB BALANCER NAME, PORT and, CERT TO DELETE
 
             environment {
-                RAW_DATA_ENV = """${sh(
+                RAW_DATA = """${sh(
                     returnStdout: true,
                     script: '''
                         set +x
@@ -52,7 +52,7 @@ pipeline {
                 }
             steps {
                 script {
-                 def response = null
+                 def response = "${RAW_DATA}"
                  def jsonString = new JsonSlurperClassic().parseText(response)
                  def jsonObj = readJSON text: jsonString
                  sh "echo ${jsonObj.port}"
