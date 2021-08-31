@@ -62,9 +62,9 @@ pipeline {
         } 
         stage('Cleanup AWS Resources') {            
             steps {
-                sh ''' Remove Listener Rule '''
-                sh ''' Remove Target Group '''
-                sh ''' Remove Imported Cert from Listener '''
+                sh ''' echo "Remove Listener Rule" '''
+                sh ''' echo "Remove Target Group" '''
+                sh ''' echo "Remove Imported Cert from Listener" '''
                 }
             }
         stage('Release and update the metadata in Dynamodb') {
