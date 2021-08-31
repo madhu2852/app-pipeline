@@ -52,8 +52,11 @@ pipeline {
                 }
             steps {
                 script {
-                 //def jsonObj = readJSON text: RAW_DATA
-                 echo ${RAW_DATA}
+                 def jsonObj = readJSON text: RAW_DATA
+                 env.ELB =  jsonObj.elb
+                 env.APP_ENVIRONMENT = jsonObj.env
+                 env.CERT = jsonObj.cert
+                 env.PORT = jsonObj.port
                 }
             }
         } 
