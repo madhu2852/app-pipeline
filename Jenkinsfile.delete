@@ -53,14 +53,11 @@ pipeline {
             steps {
                 script {
                  def response = null
-                 response = "${RAW_DATA_ENV}"
-                 env.PORT = new JsonSlurperClassic().parseText(response)
-                 env.requestBody = JsonOutput.toJson(response)
-                  }
-                sh '''
-                     echo ${requestBody}
-                    '''
+                 def jsonString = new JsonSlurperClassic().parseText(response)
+                 def jsonObj = readJSON text: jsonString
+                 sh "echo ${jsonObj.port}"
                 }
+            }
         } 
         stage('Cleanup AWS Resources') {            
             steps {
