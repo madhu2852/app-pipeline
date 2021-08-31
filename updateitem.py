@@ -60,6 +60,8 @@ def update_metadata(region,table_name,portnum,fqdn,alb,cert,target_grp_arn,env,l
         Name=fqdn,
         Value=json.dumps(json_data),
         Type='String',
+        Description='in-use',
+        Overwrite=True,
     )
     return update,response
 
