@@ -56,19 +56,19 @@ pipeline {
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
                             env.REGION = "us-east-1"
-                            env.DDB_TABLE = "dev-ports"
+                            env.DDB_TABLE = "dynamoDB-dev"
                             break
                         case 'STG':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
                             env.REGION = "us-east-1"
-                            env.DDB_TABLE = "stg-ports"
+                            env.DDB_TABLE = "dynamoDB-stg"
                             break
                         case 'PRD':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
                             env.REGION = "us-east-1"
-                            env.DDB_TABLE = "prd-ports"                        
+                            env.DDB_TABLE = "dynamoDB-prd"                        
                             break
                         default:
                             error('Listener ARN Required')
