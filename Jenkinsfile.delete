@@ -73,7 +73,9 @@ pipeline {
                         --target_group_arn=${TG_GROUP_ARN} \
                         --portnum=${PORT} \
                         --region=${REGION} \
-                        --table_name=${DDB_TABLE}
+                        --table_name=${DDB_TABLE} \
+                        --json_data=${RAW_DATA}
+                        --fqdn=${FQDN}
                  '''
                 }
             }
