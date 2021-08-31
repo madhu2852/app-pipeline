@@ -52,7 +52,7 @@ pipeline {
                 }
             steps {
                 script {
-                 def jsonObj = readJSON text: '${RAW_DATA}'
+                 def jsonObj = readJSON text: ${RAW_DATA}
                  echo jsonObj
                 }
             }
