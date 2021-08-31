@@ -54,9 +54,7 @@ pipeline {
                 script {
                  def response = null
                  response = "${RAW_DATA_ENV}"
-                 env.PORT = new JsonSlurperClassic().parseText(
-                            response.content,
-                        ).data.port
+                 env.PORT = new JsonSlurperClassic().parseText(response)
                   }
                 sh '''
                      echo ${PORT}
