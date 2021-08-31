@@ -62,12 +62,9 @@ pipeline {
         } 
         stage('Cleanup AWS Resources') {            
             steps {
-                script {
-                   env.RAW_test_DATA = "test"
-                  }
-                sh '''
-                    env 
-                    '''
+                sh ''' Remove Listener Rule '''
+                sh ''' Remove Target Group '''
+                sh ''' Remove Imported Cert from Listener '''
                 }
             }
         stage('Release and update the metadata in Dynamodb') {
