@@ -73,7 +73,7 @@ pipeline {
                         --target_group_arn=${TG_GROUP_ARN} \
                         --portnum=${PORT} \
                         --fqdn=${FQDN} \
-                        --region=${REGION}
+                        --region=${REGION} \
                         --table_name=${DDB_TABLE}
                  '''
                 }
