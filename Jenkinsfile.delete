@@ -53,9 +53,8 @@ pipeline {
             steps {
                 script {
                  def response = "${RAW_DATA}"
-                 def jsonString = new JsonSlurperClassic().parseText(response)
-                 def jsonObj = readJSON text: jsonString
-                 sh "echo ${jsonObj.port}"
+                 def jsonObj = readJSON text: response
+                 echo jsonObj
                 }
             }
         } 
