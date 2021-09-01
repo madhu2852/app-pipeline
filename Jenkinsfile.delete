@@ -78,7 +78,7 @@ pipeline {
                         --table_name=${DDB_TABLE} \
                         --json_data="${JSON_DATA}" \
                         --fqdn=${FQDN} \
-                        --app_cert=${CERT_ARN} \
+                        --cert_arn=${CERT_ARN} \
                         --listener_arn=${LISTENER_ARN}
                  '''
                 }
