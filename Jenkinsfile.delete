@@ -62,7 +62,7 @@ pipeline {
                  env.TG_GROUP_ARN = jsonObj.target_grp_arn
                  env.FQDN = jsonObj.fqdn
                  env.DDB_TABLE = jsonObj.table_name
-                 env.LISTENER_ARN = jsonObj.listerner_arn
+                 env.LISTENER_ARN = jsonObj.listener_arn
                 }
             }
         } 
