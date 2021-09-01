@@ -50,7 +50,7 @@ pipeline {
                 script {
                     env.TF_VAR_APP_FQDN = env.APP_FQDN
                     env.TF_VAR_CONTACT = env.CONTACT
-                    env.TF_VAR_INTERNAL_APP_CERTIFICATE_TAG_NAME = env.INTERNAL_APP_CERTIFICATE_TAG_NAME
+                    env.TF_VAR_APP_CERT_NAME = env.APP_CERT_NAME
                     switch(env.ENVIRONMENT) {
                         case 'DEV':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
@@ -146,11 +146,17 @@ pipeline {
                 sh '''
                     env
                     export PATH=~/.local/bin:$PATH
-                    pipenv run python3 ./updateitem.py --region=${REGION} --table_name=${DDB_TABLE} \
-                        --portnum=${TF_VAR_available_port} --fqdn=${APP_FQDN} \
-                        --alb=${PUBLIC_ALB_ARN} --cert=${INTERNAL_CERT_ARN}  \
+                    pipenv run python3 ./updateitem.py \
+                        --region=${REGION} \
+                        --table_name=${DDB_TABLE} \
+                        --portnum=${TF_VAR_available_port} \
+                        --fqdn=${APP_FQDN} \
+                        --alb=${PUBLIC_ALB_ARN} \
+                        --cert=${INTERNAL_CERT_ARN}  \
                         --target_grp_arn=${TARGET_GROUP_ARN} \
-                        --env=${ENVIRONMENT} --lstnr_rule_arn=${LISTENER_RULE_ARN}
+                        --env=${ENVIRONMENT} \
+                        --lstnr_rule_arn=${LISTENER_RULE_ARN} \
+                        --listener_arn=${PUBLIC_ALB_LISTENER}
                     '''
                 }
             }
