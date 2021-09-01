@@ -74,7 +74,7 @@ pipeline {
                         --portnum=${PORT} \
                         --region=${REGION} \
                         --table_name=${DDB_TABLE} \
-                        --json_data=jsonObj \
+                        --json_data=${env.jsonObj} \
                         --fqdn=${FQDN}
                  '''
                 }
