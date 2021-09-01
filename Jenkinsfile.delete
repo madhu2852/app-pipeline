@@ -56,12 +56,13 @@ pipeline {
                  env.JSON_DATA = jsonObj
                  env.ELB =  jsonObj.elb
                  env.APP_ENVIRONMENT = jsonObj.env
-                 env.CERT = jsonObj.cert
+                 env.CERT_ARN = jsonObj.cert
                  env.PORT = jsonObj.port
                  env.LISTENER_RULE_ARN = jsonObj.lstnr_rule_arn
                  env.TG_GROUP_ARN = jsonObj.target_grp_arn
                  env.FQDN = jsonObj.fqdn
                  env.DDB_TABLE = jsonObj.table_name
+                 env.LISTENER_ARN = jsonObj.listerner_arn
                 }
             }
         } 
@@ -76,7 +77,9 @@ pipeline {
                         --region=${REGION} \
                         --table_name=${DDB_TABLE} \
                         --json_data="${JSON_DATA}" \
-                        --fqdn=${FQDN}
+                        --fqdn=${FQDN} \
+                        --app_cert=${CERT_ARN} \
+                        --listener_arn=${LISTENER_ARN}
                  '''
                 }
             }
