@@ -43,7 +43,7 @@ resource "aws_lb_target_group_attachment" "public_alb_app_tg" {
 
 ### ADD APP SPECIFIC CERTS ###
 
-resource "aws_lb_listener_certificate" "app_internal_cert" {
-  listener_arn  = data.aws_resourcegroupstaggingapi_resources.load_balancer_lstnr.resource_tag_mapping_list[0].resource_arn
-  certificate_arn = data.aws_resourcegroupstaggingapi_resources.internal_cert.resource_tag_mapping_list[0].resource_arn
-}
+# resource "aws_lb_listener_certificate" "app_internal_cert" {
+#   listener_arn  = data.aws_resourcegroupstaggingapi_resources.load_balancer_lstnr.resource_tag_mapping_list[0].resource_arn
+#   certificate_arn = data.aws_resourcegroupstaggingapi_resources.internal_cert.resource_tag_mapping_list[0].resource_arn
+# }
