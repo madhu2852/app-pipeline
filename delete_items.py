@@ -63,7 +63,7 @@ def update_ddb_ssm(region,table_name,portnum,fqdn,json_data):
     update_ssm = ssm_client.put_parameter(
         Name=fqdn,
         Description='not-in-use',
-        Value=json.dumps(json_data),
+        Value=json_data,
         Overwrite=True,
         Type='String',
     )
