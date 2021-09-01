@@ -43,16 +43,16 @@ def delete_aws_resources(listener_rule_arn,target_group_arn,listener_arn,cert_ar
         TargetGroupArn=str(target_group_arn)
     )
 
-    remove_lstnr_cert = client.remove_listener_certificates(
-        ListenerArn=str(listener_arn),
-        Certificates=[
-            {
-                'CertificateArn': str(cert_arn),
-            },
-        ]
-    )
+    # remove_lstnr_cert = client.remove_listener_certificates(
+    #     ListenerArn=str(listener_arn),
+    #     Certificates=[
+    #         {
+    #             'CertificateArn': str(cert_arn),
+    #         },
+    #     ]
+    # )
 
-    return delete_lstnr_rule,delete_tg_grp,remove_lstnr_cert
+    return delete_lstnr_rule,delete_tg_grp #,remove_lstnr_cert
 
 
 
