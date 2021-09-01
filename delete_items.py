@@ -16,6 +16,8 @@ def get_configs():
     parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the application",default=None)
     parser.add_option("--table_name", "--table_name",dest="table_name",help="dynamodb table name to query",default=None)
     parser.add_option("--json_data", "--json_data",dest="json_data",help="json data from ssm param store",default=None)
+    parser.add_option("--cert_arn", "--cert_arn",dest="cert_arn",help="app cert arn",default=None)
+    parser.add_option("--listener_arn", "--listener_arn",dest="listener_arn",help="listener arn",default=None)
 
 
     (options, args) = parser.parse_args()
@@ -31,14 +33,27 @@ except Exception as e:
     message = 'FAILED: Unable to establish connection to ELB - {}'.format(e)
     raise Exception(message) 
 
-def delete_aws_resources(listener_rule_arn,target_group_arn):
+def delete_aws_resources(listener_rule_arn,target_group_arn,listener_arn,cert_arn):
+
     delete_lstnr_rule = client.delete_rule(
         RuleArn=str(listener_rule_arn)
     )
+
     delete_tg_grp = client.delete_target_group(
         TargetGroupArn=str(target_group_arn)
     )
-    return delete_lstnr_rule,delete_tg_grp
+
+    remove_lstnr_cert = client.remove_listener_certificates(
+        ListenerArn=str(listener_arn),
+        Certificates=[
+            {
+                'CertificateArn': str(cert_arn),
+            },
+        ]
+    )
+
+    return delete_lstnr_rule,delete_tg_grp,remove_lstnr_cert
+
 
 
 def update_ddb_ssm(region,table_name,portnum,fqdn,json_data):
@@ -75,8 +90,19 @@ def main():
     options = get_configs()
 
     try:
-        remove_aws = delete_aws_resources(options.listener_rule_arn,options.target_group_arn)
-        update_metadata_ddb_ssm = update_ddb_ssm(options.region,options.table_name,options.portnum,options.fqdn,options.json_data)
+        remove_aws = delete_aws_resources(
+            options.listener_rule_arn,
+            options.target_group_arn,
+            options.listener_arn,
+            options.cert_arn
+            )
+        update_metadata_ddb_ssm = update_ddb_ssm(
+            options.region,
+            options.table_name,
+            options.portnum,
+            options.fqdn,
+            options.json_data
+            )
 
         return remove_aws,update_metadata_ddb_ssm
 
