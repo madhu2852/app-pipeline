@@ -166,9 +166,7 @@ pipeline {
                 }
             }
         stage('Remove Objects') {
-            when { 
-                environment name: 'ACTION', value: 'DECOMMISSION' 
-            }
+            when { expression { params.ACTION == "DECOMMISSION" } }
             steps {
                 echo 'run this stage - only if the env name and value matches'
             }
