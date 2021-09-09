@@ -57,6 +57,9 @@ pipeline {
     stages {
         stage('Deploy to AWS') {
             when { expression { params.ACTION == "PROVISION" } }
+            input {
+                message "Approve to CREATE Pub ELB Objects in AWS"
+             }
             stages {
                 stage('Preparation') {
                     steps {
@@ -175,6 +178,9 @@ pipeline {
            }
         stage('Remove Objects in AWS') {
             when { expression { params.ACTION == "DECOMMISSION" } }
+            input {
+                message "Approve to DELETE Pub ELB Objects in AWS"
+             }
             stages {        
                 stage('Preparation') { // GET THE LOAB BALANCER NAME, PORT and, CERT TO DELETE
 
