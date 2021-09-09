@@ -43,6 +43,11 @@ pipeline {
             choices: ['DEV', 'STG', 'PRD'],
             description: '''environment to deploy the app''',
         )
+        choice(
+            name: 'ACTION',
+            choices: ['PROVISION', 'DECOMMISSION'],
+            description: '''YES: Created Objects. NO: Deletes Objects based on APP FQDN''',
+        )        
     }
     stages {        
         stage('Preparation') {
@@ -160,7 +165,15 @@ pipeline {
                     '''
                 }
             }
-        }
+        stage('Remove Objects') {
+            when { 
+                environment name: 'ACTION', value: 'DECOMMISSION' 
+            }
+            steps {
+                echo 'run this stage - only if the env name and value matches'
+            }
+        }            
+    }
     post {
         cleanup {
             cleanWs(cleanWhenAborted: false)
