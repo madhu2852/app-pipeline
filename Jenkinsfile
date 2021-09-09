@@ -51,6 +51,7 @@ pipeline {
     }
     stages {        
         stage('Preparation') {
+            when { expression { params.ACTION == "PROVISION" } }
             steps {
                 script {
                     env.TF_VAR_APP_FQDN = env.APP_FQDN
@@ -82,6 +83,7 @@ pipeline {
             }
         } 
         stage('Configure AWS Services (terraform apply)') {
+            when { expression { params.ACTION == "PROVISION" } }
             environment {
                 TF_VAR_available_port = """${sh(
                     returnStdout: true,
@@ -106,7 +108,7 @@ pipeline {
                 }
             }
         stage('add metadata and reserve port in Dynamodb Table') {
-            
+            when { expression { params.ACTION == "PROVISION" } }
             environment {
                 
                 
