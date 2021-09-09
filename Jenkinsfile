@@ -45,7 +45,7 @@ pipeline {
         )
         choice(
             name: 'ACTION',
-            choices: ['PROVISION', 'DECOMMISSION'],
+            choices: ['', 'PROVISION', 'DECOMMISSION'],
             description: '''YES: Created Objects. NO: Deletes Objects based on APP FQDN''',
         )        
     }
