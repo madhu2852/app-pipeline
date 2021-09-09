@@ -57,11 +57,9 @@ pipeline {
     stages {
         stage('Deploy to AWS') {
             when { expression { params.ACTION == "PROVISION" } }
-            input {
-                message "Approve to CREATE Pub ELB Objects in AWS"
-             }
             stages {
                 stage('Preparation') {
+                    input { message "Approve to CREATE Pub ELB Objects in AWS" }
                     steps {
                         script {
                             env.TF_VAR_APP_FQDN = env.APP_FQDN
@@ -178,12 +176,9 @@ pipeline {
            }
         stage('Remove Objects in AWS') {
             when { expression { params.ACTION == "DECOMMISSION" } }
-            input {
-                message "Approve to DELETE Pub ELB Objects in AWS"
-             }
             stages {        
                 stage('Preparation') { // GET THE LOAB BALANCER NAME, PORT and, CERT TO DELETE
-
+                    input { message "Approve to DELETE Pub ELB Objects in AWS" }
                     environment {
                         RAW_DATA = """${sh(
                             returnStdout: true,
