@@ -19,6 +19,7 @@ def get_configs():
     parser.add_option("--alb", "--alb",dest="alb",help="alb used for the application",default=None)
     parser.add_option("--target_grp_arn", "--target_grp_arn",dest="target_grp_arn",help="target group of the application",default=None)
     parser.add_option("--listener_arn", "--listener_arn",dest="listener_arn",help="listener arn of the application",default=None)
+    parser.add_option("--state", "--state",dest="state",help="state of app fqdn",default=None)
 
 
     (options, args) = parser.parse_args()
@@ -29,7 +30,7 @@ def get_configs():
     return options
 
 
-def update_metadata(region,table_name,portnum,fqdn,alb,cert,target_grp_arn,env,lstnr_rule_arn,listener_arn):
+def update_metadata(region,table_name,portnum,fqdn,alb,cert,target_grp_arn,env,lstnr_rule_arn,listener_arn,state):
     try:
         table = boto3.resource('dynamodb',region_name=region).Table(table_name)
         client = boto3.client('ssm',region_name=region)
@@ -58,6 +59,7 @@ def update_metadata(region,table_name,portnum,fqdn,alb,cert,target_grp_arn,env,l
             "environment": env,
             "lstnr_rule_arn": lstnr_rule_arn,
             "listener_arn": listener_arn,
+            "state": state,
         }
     response = client.put_parameter(
         Name=fqdn,
@@ -84,7 +86,8 @@ def main():
             options.target_grp_arn,
             options.env,
             options.lstnr_rule_arn,
-            options.listener_arn
+            options.listener_arn,
+            options.state
             )
         message = "Successfully updated metadata to Dynamodb and SSM"
         logger.info(message)
