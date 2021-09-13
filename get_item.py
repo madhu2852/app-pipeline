@@ -27,7 +27,7 @@ def get_parameters(region,fqdn):
         ssm = boto3.client('ssm', region_name=region)
         response = ssm.get_parameters(
             Names=[
-                fqdn,
+                str(fqdn),
             ],
             WithDecryption=True
         )
@@ -44,7 +44,7 @@ def fqdn_verify(region,fqdn):
         ssm = boto3.client('ssm', region_name=region)
         response = ssm.get_parameters(
             Names=[
-                fqdn,
+                str(fqdn),
             ],
             WithDecryption=True
         )
