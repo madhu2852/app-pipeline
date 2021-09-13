@@ -1,6 +1,7 @@
 import boto3
 import os
 from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
 from optparse import OptionParser
 import logging
 
@@ -54,19 +55,19 @@ def fqdn_verify(region,fqdn):
             print(message)
             sys.exit(2)
         return response['Parameters'][0]['Value']
-    except SSM.Client.exceptions.ParameterNotFound as e:
+    except Client.exceptions.ParameterNotFound as e:
         message = 'Success: Parameter Not Found. Available to use. Proceeding.... {}'.format(e)
         print(message)
         sys.exit(0)
-    except SSM.Client.exceptions.InvalidKeyId as e:
+    except Client.exceptions.InvalidKeyId as e:
         message = 'FAILED: Invalid Key ID. Exiting.... {}'.format(e)
         print(message)
         sys.exit(2)
-    except SSM.Client.exceptions.InternalServerError as e:
+    except Client.exceptions.InternalServerError as e:
         message = 'FAILED: Internal Server Error. Exiting.... {}'.format(e)
         print(message)
         sys.exit(2)
-    except SSM.Client.exceptions.ParameterVersionNotFound as e:
+    except Client.exceptions.ParameterVersionNotFound as e:
         message = 'FAILED: Parameter Version not found!!!. Exiting.... {}'.format(e)
         print(message)
         sys.exit(2)
