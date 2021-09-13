@@ -61,7 +61,7 @@ pipeline {
                     export PATH=~/.local/bin:$PATH
                     pipenv run python3 ./get_item.py \
                         --region=${REGION} \
-                        --fqdn-check=${APP_FQDN} \
+                        --check=${APP_FQDN} \
                     '''
                 }
             }
