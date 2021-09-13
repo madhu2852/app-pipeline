@@ -55,16 +55,6 @@ pipeline {
         )    
     }
     stages {
-        stage('Fail if APP FQDN already in use'){
-            steps {
-                sh '''
-                    export PATH=~/.local/bin:$PATH
-                    pipenv run python3 ./get_item.py \
-                        --region=${REGION} \
-                        --check=${APP_FQDN} \
-                    '''
-                }
-            }
         stage('Deploy to AWS') {
             when { expression { params.ACTION == "PROVISION" } }
             stages {
@@ -178,8 +168,7 @@ pipeline {
                                 --target_grp_arn=${TARGET_GROUP_ARN} \
                                 --env=${ENVIRONMENT} \
                                 --lstnr_rule_arn=${LISTENER_RULE_ARN} \
-                                --listener_arn=${PUBLIC_ALB_LISTENER} \
-                                --state="in-use"
+                                --listener_arn=${PUBLIC_ALB_LISTENER}
                             '''
                         }
                     }
@@ -203,6 +192,7 @@ pipeline {
                     steps {
                         script {
                         def jsonObj = readJSON text: RAW_DATA
+                        env.JSON_DATA = jsonObj
                         env.ELB =  jsonObj.elb
                         env.APP_ENVIRONMENT = jsonObj.env
                         env.CERT_ARN = jsonObj.cert
@@ -225,10 +215,10 @@ pipeline {
                                 --portnum=${PORT} \
                                 --region=${REGION} \
                                 --table_name=${DDB_TABLE} \
+                                --json_data="${JSON_DATA}" \
                                 --fqdn=${FQDN} \
                                 --cert_arn=${CERT_ARN} \
-                                --listener_arn=${LISTENER_ARN} \
-                                --state="not-in-use"
+                                --listener_arn=${LISTENER_ARN}
                         '''
                         }
                     }
