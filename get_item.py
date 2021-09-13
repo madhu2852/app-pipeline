@@ -49,6 +49,7 @@ def fqdn_verify(region,fqdn):
             WithDecryption=True
         )
         json_data = response['Parameters'][0]['Value']
+        print(json_data)
         fqdn_state = json_data['State']
         if fqdn_state == "in-use":
             message = 'Match Found: FQDN is already in use. Exiting....'
