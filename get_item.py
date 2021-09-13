@@ -11,7 +11,7 @@ def get_configs():
     parser = OptionParser()
     parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the app to remove",default=None)
     parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
-    parser.add_option("--check", "check",dest="check",help="check if app fqdn already exists",default=None)
+    parser.add_option("--check", "--check",dest="check",help="check if app fqdn already exists",default=None)
 
     (options, args) = parser.parse_args()
     try:
