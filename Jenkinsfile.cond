@@ -47,12 +47,7 @@ pipeline {
             name: 'ACTION',
             choices: ['', 'PROVISION', 'DECOMMISSION'],
             description: '''YES: Created Objects. NO: Deletes Objects based on APP FQDN''',
-        )
-        choice(
-            name: 'REGION',
-            choices: ['us-east-1'],
-            description: '''Region''',
-        )    
+        ) 
     }
     stages {
         stage('Deploy to AWS') {
