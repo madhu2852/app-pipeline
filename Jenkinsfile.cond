@@ -208,6 +208,7 @@ pipeline {
                 stage('Cleanup AWS Resources') {            
                     steps {
                         sh '''
+                            env
                             export PATH=~/.local/bin:$PATH
                             pipenv run python3 ./delete_items.py \
                                 --listener_rule_arn=${LISTENER_RULE_ARN} \
