@@ -30,7 +30,7 @@ def get_configs():
         options.map = None
     return options
 
-def delete_aws_resources(listener_rule_arn,target_group_arn,listener_arn,cert_arn,region):
+def delete_aws_resources(listener_rule_arn,target_group_arn,listener_arn,cert,region):
 
     try:
         client = boto3.client('elbv2', region_name=region)
@@ -47,7 +47,7 @@ def delete_aws_resources(listener_rule_arn,target_group_arn,listener_arn,cert_ar
         #     ListenerArn=str(listener_arn),
         #     Certificates=[
         #         {
-        #             'CertificateArn': str(cert_arn),
+        #             'CertificateArn': str(cert),
         #         },
         #     ]
         # )
@@ -110,7 +110,7 @@ def main():
             options.listener_rule_arn,
             options.target_group_arn,
             options.listener_arn,
-            options.cert_arn,
+            options.cert,
             options.region,
             )
         update_metadata_ddb_ssm = update_ddb_ssm(
