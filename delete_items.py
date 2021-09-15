@@ -11,7 +11,7 @@ def get_configs():
     parser = OptionParser()
     parser.add_option("--env", "--env",dest="env",help="environment to get the available port",default=None)
     parser.add_option("--lstnr_rule_arn", "--lstnr_rule_arn",dest="lstnr_rule_arn",help="fqdn of the app to remove",default=None)
-    parser.add_option("--target_group_arn", "--target_group_arn",dest="target_group_arn",help="dynamodb region",default=None)
+    parser.add_option("--target_grp_arn", "--target_grp_arn",dest="target_grp_arn",help="dynamodb region",default=None)
     parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
     parser.add_option("--portnum", "--portnum",dest="portnum",help="assigned port number",default=None)
     parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the application",default=None)
@@ -30,7 +30,7 @@ def get_configs():
         options.map = None
     return options
 
-def delete_aws_resources(lstnr_rule_arn,target_group_arn,listener_arn,cert,region):
+def delete_aws_resources(lstnr_rule_arn,target_grp_arn,listener_arn,cert,region):
 
     try:
         client = boto3.client('elbv2', region_name=region)
@@ -40,7 +40,7 @@ def delete_aws_resources(lstnr_rule_arn,target_group_arn,listener_arn,cert,regio
         )
 
         delete_tg_grp = client.delete_target_group(
-            TargetGroupArn=str(target_group_arn)
+            TargetGroupArn=str(target_grp_arn)
         )
 
         # remove_lstnr_cert = client.remove_listener_certificates(
@@ -108,7 +108,7 @@ def main():
     try:
         remove_aws = delete_aws_resources(
             options.lstnr_rule_arn,
-            options.target_group_arn,
+            options.target_grp_arn,
             options.listener_arn,
             options.cert,
             options.region,
