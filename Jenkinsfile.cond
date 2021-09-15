@@ -12,6 +12,7 @@ pipeline {
         
         AWS_ACCESS_KEY_ID = credentials('secret-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('access-key')
+        REGION = "us-east-1"
         PIP_ENV = """${sh(
                     returnStdout: true,
                     script: '''
@@ -48,11 +49,6 @@ pipeline {
             choices: ['', 'PROVISION', 'DECOMMISSION'],
             description: '''YES: Created Objects. NO: Deletes Objects based on APP FQDN''',
         )
-        choice(
-            name: 'REGION',
-            choices: ['us-east-1'],
-            description: '''Region''',
-        )    
     }
     stages {
         stage('Deploy to AWS') {
@@ -69,19 +65,16 @@ pipeline {
                                 case 'DEV':
                                     env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
                                     env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
-                                    env.REGION = "us-east-1"
                                     env.DDB_TABLE = "dynamoDB-dev"
                                     break
                                 case 'STG':
                                     env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
                                     env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
-                                    env.REGION = "us-east-1"
                                     env.DDB_TABLE = "dynamoDB-stg"
                                     break
                                 case 'PRD':
                                     env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
                                     env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
-                                    env.REGION = "us-east-1"
                                     env.DDB_TABLE = "dynamoDB-prd"                        
                                     break
                                 default:
@@ -183,7 +176,6 @@ pipeline {
                         RAW_DATA = """${sh(
                             returnStdout: true,
                             script: '''
-                                set +x
                                 export PATH=~/.local/bin:$PATH
                                 pipenv run python3 ./get_item.py --region=${REGION} --fqdn=${APP_FQDN}
                             '''    
