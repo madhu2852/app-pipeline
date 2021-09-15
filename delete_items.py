@@ -15,7 +15,9 @@ def get_configs():
     parser.add_option("--portnum", "--portnum",dest="portnum",help="assigned port number",default=None)
     parser.add_option("--fqdn", "--fqdn",dest="fqdn",help="fqdn of the application",default=None)
     parser.add_option("--table_name", "--table_name",dest="table_name",help="dynamodb table name to query",default=None)
-    parser.add_option("--cert_arn", "--cert_arn",dest="cert_arn",help="app cert arn",default=None)
+    parser.add_option("--cert", "--cert",dest="cert",help="app cert arn",default=None)
+    parser.add_option("--alb", "--alb",dest="alb",help="alb used for the application",default=None)
+    parser.add_option("--target_grp_arn", "--target_grp_arn",dest="target_grp_arn",help="target group of the application",default=None)
     parser.add_option("--listener_arn", "--listener_arn",dest="listener_arn",help="listener arn",default=None)
     parser.add_option("--state", "--state",dest="state",help="state of the application",default=None)
 
