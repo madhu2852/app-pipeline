@@ -9,6 +9,7 @@ logger.setLevel(logging.INFO)
 
 def get_configs():
     parser = OptionParser()
+    parser.add_option("--env", "--env",dest="env",help="environment to get the available port",default=None)
     parser.add_option("--listener_rule_arn", "--listener_rule_arn",dest="listener_rule_arn",help="fqdn of the app to remove",default=None)
     parser.add_option("--target_group_arn", "--target_group_arn",dest="target_group_arn",help="dynamodb region",default=None)
     parser.add_option("--region", "--region",dest="region",help="dynamodb region",default=None)
