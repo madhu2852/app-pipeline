@@ -209,7 +209,7 @@ pipeline {
                                 --fqdn=${FQDN} \
                                 --alb=${ELB} \
                                 --cert=${CERT_ARN} \
-                                --target_group_arn=${TG_GROUP_ARN} \
+                                --target_grp_arn=${TG_GROUP_ARN} \
                                 --env=${APP_ENVIRONMENT} \
                                 --lstnr_rule_arn=${LISTENER_RULE_ARN} \
                                 --listener_arn=${LISTENER_ARN} \
