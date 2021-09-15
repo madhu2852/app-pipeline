@@ -185,6 +185,7 @@ pipeline {
                     steps {
                         script {
                         def jsonObj = readJSON text: RAW_DATA
+                        env.APP_REGION = jsonObj.region
                         env.ELB =  jsonObj.elb
                         env.APP_ENVIRONMENT = jsonObj.env
                         env.CERT_ARN = jsonObj.cert
@@ -202,13 +203,15 @@ pipeline {
                         sh '''
                             export PATH=~/.local/bin:$PATH
                             pipenv run python3 ./delete_items.py \
-                                --listener_rule_arn=${LISTENER_RULE_ARN} \
-                                --target_group_arn=${TG_GROUP_ARN} \
-                                --portnum=${PORT} \
-                                --region=${REGION} \
+                                --region=${APP_REGION} \
                                 --table_name=${DDB_TABLE} \
+                                --portnum=${PORT} \
                                 --fqdn=${FQDN} \
-                                --cert_arn=${CERT_ARN} \
+                                --alb=${ELB} \
+                                --cert=${CERT_ARN} \
+                                --target_group_arn=${TG_GROUP_ARN} \
+                                --env=${APP_ENVIRONMENT} \
+                                --listener_rule_arn=${LISTENER_RULE_ARN} \
                                 --listener_arn=${LISTENER_ARN} \
                                 --state="not-in-use"
                         '''
