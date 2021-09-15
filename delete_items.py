@@ -36,7 +36,7 @@ def delete_aws_resources(lstnr_rule_arn,target_group_arn,listener_arn,cert,regio
         client = boto3.client('elbv2', region_name=region)
 
         delete_lstnr_rule = client.delete_rule(
-            RuleArn=str(listener_rule_arn)
+            RuleArn=str(lstnr_rule_arn)
         )
 
         delete_tg_grp = client.delete_target_group(
@@ -107,7 +107,7 @@ def main():
 
     try:
         remove_aws = delete_aws_resources(
-            options.listener_rule_arn,
+            options.lstnr_rule_arn,
             options.target_group_arn,
             options.listener_arn,
             options.cert,
