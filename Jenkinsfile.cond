@@ -186,7 +186,7 @@ pipeline {
                         script {
                         def jsonObj = readJSON text: RAW_DATA
                         env.APP_REGION = jsonObj.region
-                        env.ELB =  jsonObj.elb
+                        env.ELB =  jsonObj.alb
                         env.APP_ENVIRONMENT = jsonObj.environment
                         env.CERT_ARN = jsonObj.cert
                         env.PORT = jsonObj.port
