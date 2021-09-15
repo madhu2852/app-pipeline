@@ -47,7 +47,12 @@ pipeline {
             name: 'ACTION',
             choices: ['', 'PROVISION', 'DECOMMISSION'],
             description: '''YES: Created Objects. NO: Deletes Objects based on APP FQDN''',
-        ) 
+        )
+        choice(
+            name: 'REGION',
+            choices: ['us-east-1'],
+            description: '''Region''',
+        )    
     }
     stages {
         stage('Deploy to AWS') {
@@ -203,7 +208,6 @@ pipeline {
                 stage('Cleanup AWS Resources') {            
                     steps {
                         sh '''
-                            env
                             export PATH=~/.local/bin:$PATH
                             pipenv run python3 ./delete_items.py \
                                 --listener_rule_arn=${LISTENER_RULE_ARN} \
