@@ -87,7 +87,7 @@ def main():
             options.env,
             options.lstnr_rule_arn,
             options.listener_arn,
-            options.state
+            options.state,
             )
         message = "Successfully updated metadata to Dynamodb and SSM"
         logger.info(message)
