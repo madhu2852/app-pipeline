@@ -53,29 +53,22 @@ pipeline {
     stages {
         stage('set up aws credentials based on branch') {
             steps {
-                sh ''' env '''
                 script {
-                    TEST_ENV = """${sh(
-                                returnStdout: true,
-                                script: '''
-                                    env
-                                '''    
-                                    ).trim()}"""                    
-                    switch(env.BRANCH_NAME) {
-                        case 'develop':
+                    switch(env.GIT_BRANCH) {
+                        case 'origin/develop':
                             AWS_ACCESS_KEY_ID = credentials('secret-key-id')
                             AWS_SECRET_ACCESS_KEY = credentials('access-key')
                             break
-                        case 'stage':
+                        case 'origin/stage':
                             AWS_ACCESS_KEY_ID = credentials('secret-key-id')
                             AWS_SECRET_ACCESS_KEY = credentials('access-key')
                             break                            
-                        case 'master':
+                        case 'origin/master':
                             AWS_ACCESS_KEY_ID = credentials('secret-key-id')
                             AWS_SECRET_ACCESS_KEY = credentials('access-key')
                             break                            
                         default:
-                            error('Invalid Branch')
+                            error('Invalid Branch:' + ${env.GIT_BRANCH})
 
                     }
                 }
