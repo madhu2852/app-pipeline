@@ -8,7 +8,10 @@ pipeline {
         buildDiscarder(logRotator(daysToKeepStr: '90'))
         disableConcurrentBuilds()
     }
-    environment {        
+    environment {
+        
+        AWS_ACCESS_KEY_ID = credentials('secret-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('access-key')
         REGION = "us-east-1"
         PIP_ENV = """${sh(
                     returnStdout: true,
@@ -50,8 +53,15 @@ pipeline {
     stages {
         stage('set up aws credentials based on branch') {
             steps {
+                sh ''' env '''
                 script {
-                    switch(branch) {
+                    TEST_ENV = """${sh(
+                                returnStdout: true,
+                                script: '''
+                                    env
+                                '''    
+                                    ).trim()}"""                    
+                    switch(env.BRANCH_NAME) {
                         case 'develop':
                             AWS_ACCESS_KEY_ID = credentials('secret-key-id')
                             AWS_SECRET_ACCESS_KEY = credentials('access-key')
