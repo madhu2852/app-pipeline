@@ -51,6 +51,29 @@ pipeline {
         )
     }
     stages {
+        stage('set up aws credentials based on branch') {
+            steps {
+                script {
+                    switch(branch) {
+                        case 'develop':
+                            AWS_ACCESS_KEY_ID = credentials('secret-key-id')
+                            AWS_SECRET_ACCESS_KEY = credentials('access-key')
+                            break
+                        case 'stage':
+                            AWS_ACCESS_KEY_ID = credentials('secret-key-id')
+                            AWS_SECRET_ACCESS_KEY = credentials('access-key')
+                            break                            
+                        case 'master':
+                            AWS_ACCESS_KEY_ID = credentials('secret-key-id')
+                            AWS_SECRET_ACCESS_KEY = credentials('access-key')
+                            break                            
+                        default:
+                            error('Invalid Branch')
+
+                    }
+                }
+            }
+        }      
         stage('Deploy to AWS') {
             when { expression { params.ACTION == "PROVISION" } }
             stages {
