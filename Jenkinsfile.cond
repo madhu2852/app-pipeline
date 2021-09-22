@@ -9,9 +9,6 @@ pipeline {
         disableConcurrentBuilds()
     }
     environment {
-        
-        AWS_ACCESS_KEY_ID = credentials('secret-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('access-key')
         REGION = "us-east-1"
         PIP_ENV = """${sh(
                     returnStdout: true,
@@ -56,21 +53,32 @@ pipeline {
                 script {
                     switch(env.GIT_BRANCH) {
                         case 'origin/develop':
-                            AWS_ACCESS_KEY_ID = credentials('secret-key-id')
-                            AWS_SECRET_ACCESS_KEY = credentials('access-key')
+                            credential_id = 'dev-user-creds'
                             break
                         case 'origin/stage':
-                            AWS_ACCESS_KEY_ID = credentials('secret-key-id')
-                            AWS_SECRET_ACCESS_KEY = credentials('access-key')
+                            credential_id = 'stg-user-creds'
                             break                            
                         case 'origin/master':
-                            AWS_ACCESS_KEY_ID = credentials('secret-key-id')
-                            AWS_SECRET_ACCESS_KEY = credentials('access-key')
+                            credential_id = 'prd-user-creds'
                             break                            
                         default:
                             error('Invalid Branch:' + ${env.GIT_BRANCH})
-
+                            break
                     }
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: credential_id,
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        println "Setting up environment"
+                        sh """
+                            aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
+                            aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
+                            aws configure set region ${REGION}
+                        """
+                    }
+                    println "AWS  Credential Setup Completed"
                 }
             }
         }      
