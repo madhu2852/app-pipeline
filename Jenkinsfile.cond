@@ -8,10 +8,7 @@ pipeline {
         buildDiscarder(logRotator(daysToKeepStr: '90'))
         disableConcurrentBuilds()
     }
-    environment {
-        
-        AWS_ACCESS_KEY_ID = credentials('secret-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('access-key')
+    environment {        
         REGION = "us-east-1"
         PIP_ENV = """${sh(
                     returnStdout: true,
