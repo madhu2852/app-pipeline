@@ -37,69 +37,67 @@ pipeline {
             trim: true,
         )
         choice(
-            name: 'ENVIRONMENT',
-            choices: ['DEV', 'STG', 'PRD'],
-            description: '''environment to deploy the app''',
-        )
-        choice(
             name: 'ACTION',
             choices: ['', 'PROVISION', 'DECOMMISSION'],
             description: '''YES: Created Objects. NO: Deletes Objects based on APP FQDN''',
         )
     }
-    stages {    
+    stages {
+        stage('Preparation') {
+            steps {
+                script {
+                    env.TF_VAR_APP_FQDN = env.APP_FQDN
+                    env.TF_VAR_CONTACT = env.CONTACT
+                    env.TF_VAR_APP_CERT_NAME = env.APP_CERT_NAME
+                    credential_id = 'aws-jenkins-user'
+                    switch(env.GIT_BRANCH) {
+                        case 'origin/develop':
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
+                            env.DDB_TABLE = "dynamoDB-dev"
+                            env.ENVIRONMENT = "DEV"
+                            env.acc_no = "021336347170"
+                            break
+                        case 'origin/stage':
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
+                            env.DDB_TABLE = "dynamoDB-stg"
+                            env.ENVIRONMENT = "STG"
+                            break
+                        case 'origin/master':
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
+                            env.DDB_TABLE = "dynamoDB-prd"
+                            env.ENVIRONMENT = "PRD"
+                            env.acc_no = "552777967030"              
+                            break
+                        default:
+                            error('Invalid Input')
+                            break
+                    }
+                    withAWS(credentials: credential_id, roleAccount: acc_no, role: 'jenkins_lc_role'
+
+                    ) {
+                        println "Setting up AWS environment - assume role"
+
+                        env.AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID
+                        env.AWS_SECRET_ACCESS_KEY = env.AWS_SECRET_ACCESS_KEY
+                        env.AWS_SESSION_TOKEN = env.AWS_SESSION_TOKEN
+                        env.AWS_DEFAULT_REGION = env.REGION
+                    }
+                    println "AWS  Credential Setup Completed"
+                }
+            }
+        } 
         stage('Deploy to AWS') {
             when { expression { params.ACTION == "PROVISION" } }
             stages {
-                stage('Preparation') {
-                    steps {
-                        script {
-                            env.TF_VAR_APP_FQDN = env.APP_FQDN
-                            env.TF_VAR_CONTACT = env.CONTACT
-                            env.TF_VAR_APP_CERT_NAME = env.APP_CERT_NAME
-                            credential_id = 'aws-jenkins-user'
-                            switch(env.GIT_BRANCH) {
-                                case 'origin/develop':
-                                    env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
-                                    env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
-                                    env.DDB_TABLE = "dynamoDB-dev"
-                                    env.ENVIRONMENT = "DEV"
-                                    break
-                                case 'origin/stage':
-                                    env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
-                                    env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
-                                    env.DDB_TABLE = "dynamoDB-stg"
-                                    env.ENVIRONMENT = "STG"
-                                    break
-                                case 'origin/master':
-                                    env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
-                                    env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
-                                    env.DDB_TABLE = "dynamoDB-prd"
-                                    env.ENVIRONMENT = "PRD"
-                                    env.acc_no = "552777967030"              
-                                    break
-                                default:
-                                    error('Invalid Input')
-                                    break
-                            }
-                            withAWS(credentials: credential_id, roleAccount: acc_no, role: 'jenkins_lc_role'
-
-                            ) {
-                                println "Setting up environment"
-                                sh """
-                                    aws ec2 describe-instances 
-                                """
-                            }
-                            println "AWS  Credential Setup Completed"
-                        }
-                    }
-                } 
                 stage('Validate AWS Services (terraform plan)') {
                     environment {
                         TF_VAR_available_port = """${sh(
                             returnStdout: true,
                             script: '''
-                                set +x
+                                env
                                 export PATH=~/.local/bin:$PATH
                                 pipenv run python3 ./queryitem.py --env=${ENVIRONMENT} --region=${REGION} --table_name=${DDB_TABLE}
                             '''    
