@@ -47,70 +47,50 @@ pipeline {
             description: '''YES: Created Objects. NO: Deletes Objects based on APP FQDN''',
         )
     }
-    stages {
-        stage('set up aws credentials based on branch') {
-            steps {
-                script {
-                    switch(env.GIT_BRANCH) {
-                        case 'origin/develop':
-                            credential_id = 'dev-user-creds'
-                            break
-                        case 'origin/stage':
-                            credential_id = 'stg-user-creds'
-                            break                            
-                        case 'origin/master':
-                            credential_id = 'prd-user-creds'
-                            break                            
-                        default:
-                            error('Invalid Branch:' + ${env.GIT_BRANCH})
-                            break
-                    }
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: credential_id,
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        println "Setting up environment"
-                        sh """
-                            aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
-                            aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
-                            aws configure set region ${REGION}
-                        """
-                    }
-                    println "AWS  Credential Setup Completed"
-                }
-            }
-        }      
+    stages {    
         stage('Deploy to AWS') {
             when { expression { params.ACTION == "PROVISION" } }
             stages {
                 stage('Preparation') {
-                    input { message "Approve to CREATE Pub ELB Objects in AWS" }
                     steps {
                         script {
                             env.TF_VAR_APP_FQDN = env.APP_FQDN
                             env.TF_VAR_CONTACT = env.CONTACT
                             env.TF_VAR_APP_CERT_NAME = env.APP_CERT_NAME
-                            switch(env.ENVIRONMENT) {
-                                case 'DEV':
+                            credential_id = 'aws-jenkins-user'
+                            switch(env.GIT_BRANCH) {
+                                case 'origin/develop':
                                     env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
                                     env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
                                     env.DDB_TABLE = "dynamoDB-dev"
+                                    env.ENVIRONMENT = "DEV"
                                     break
-                                case 'STG':
+                                case 'origin/stage':
                                     env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
                                     env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
                                     env.DDB_TABLE = "dynamoDB-stg"
+                                    env.ENVIRONMENT = "STG"
                                     break
-                                case 'PRD':
+                                case 'origin/master':
                                     env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
                                     env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
-                                    env.DDB_TABLE = "dynamoDB-prd"                        
+                                    env.DDB_TABLE = "dynamoDB-prd"
+                                    env.ENVIRONMENT = "PRD"
+                                    env.acc_no = "552777967030"              
                                     break
                                 default:
-                                    error('Listener ARN Required')
+                                    error('Invalid Input')
+                                    break
                             }
+                            withAWS(credentials: credential_id, roleAccount: acc_no, role: 'jenkins_lc_role'
+
+                            ) {
+                                println "Setting up environment"
+                                sh """
+                                    aws ec2 describe-instances 
+                                """
+                            }
+                            println "AWS  Credential Setup Completed"
                         }
                     }
                 } 
