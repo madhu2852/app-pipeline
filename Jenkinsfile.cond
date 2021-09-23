@@ -56,7 +56,7 @@ pipeline {
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
                             env.DDB_TABLE = "dynamoDB-dev"
                             env.ENVIRONMENT = "DEV"
-                            env.acc_no = "021336347170"
+                            env.acc_no = "yyy"
                             break
                         case 'origin/stage':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
@@ -69,7 +69,7 @@ pipeline {
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
                             env.DDB_TABLE = "dynamoDB-prd"
                             env.ENVIRONMENT = "PRD"
-                            env.acc_no = "552777967030"              
+                            env.acc_no = "xxx"              
                             break
                         default:
                             error('Invalid Input')
@@ -97,7 +97,7 @@ pipeline {
                         TF_VAR_available_port = """${sh(
                             returnStdout: true,
                             script: '''
-                                env
+                                set +x
                                 export PATH=~/.local/bin:$PATH
                                 pipenv run python3 ./queryitem.py --env=${ENVIRONMENT} --region=${REGION} --table_name=${DDB_TABLE}
                             '''    
