@@ -188,7 +188,6 @@ pipeline {
             when { expression { params.ACTION == "DECOMMISSION" } }
             stages {        
                 stage('Preparation') { // GET THE LOAB BALANCER NAME, PORT and, CERT TO DELETE
-                    input { message "Approve to DELETE Pub ELB Objects in AWS" }
                     environment {
                         RAW_DATA = """${sh(
                             returnStdout: true,
