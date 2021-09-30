@@ -29,7 +29,31 @@ def get_configs():
         options.map = None
     return options
 
-def delete_aws_resources(lstnr_rule_arn,target_grp_arn,listener_arn,cert,region):
+def check_fqdn(fqdn,region):
+    try:
+        ssm_client = boto3.client('ssm',region_name=region)
+
+        response = ssm_client.get_parameter(
+            Name=str(fqdn),
+        )
+        data = response['Parameter']['Value']
+        json_data = json.loads(data)
+        app_state = json_data['state']
+        if app_state != 'in-use':
+            message = "objects cannot be deleted due to either the fqdn is not configured or already has been deleted."
+            raise Exception(message)
+        else:
+            return 'Object Found and can be deleted.'   
+    except Exception as e:
+        message = 'Reason - {}'.format(e)
+        raise Exception(message)
+        
+def delete_aws_resources(
+    lstnr_rule_arn,
+    target_grp_arn,
+    listener_arn,
+    cert,
+    region):
 
     try:
         client = boto3.client('elbv2', region_name=region)
@@ -56,7 +80,18 @@ def delete_aws_resources(lstnr_rule_arn,target_grp_arn,listener_arn,cert,region)
         message = 'FAILED: Unable to remove objects from AWS. Reason: {}'.format(e)
         raise Exception(message)     
 
-def update_ddb_ssm(region,table_name,portnum,fqdn,alb,cert,target_grp_arn,env,lstnr_rule_arn,listener_arn,state): 
+def update_ddb_ssm(
+    region,
+    table_name,
+    portnum,
+    fqdn,
+    alb,
+    cert,
+    target_grp_arn,
+    env,
+    lstnr_rule_arn,
+    listener_arn,
+    state): 
 
     try:
         ddb_table = boto3.resource('dynamodb',region_name=region).Table(table_name)
@@ -105,6 +140,10 @@ def main():
     options = get_configs()
 
     try:
+        check_before_delete = check_fqdn(
+            options.fqdn,
+            options.region,
+        )
         remove_aws = delete_aws_resources(
             options.lstnr_rule_arn,
             options.target_grp_arn,
@@ -126,7 +165,7 @@ def main():
             options.state,
             )
 
-        return remove_aws,update_metadata_ddb_ssm
+        return check_before_delete,remove_aws,update_metadata_ddb_ssm
 
     except Exception as e:
         message = 'FAILED: Script Failed to Execute {}'.format(e)
