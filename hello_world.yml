@@ -13,6 +13,12 @@
 
   tasks:
 
+    - name: Check Date with Shell command
+      shell:
+         "whoami"
+      register: datecmd
+      tags: datecmd
+      
     - name: Get facts
       panos_facts:
         provider: '{{ device }}'
