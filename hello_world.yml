@@ -19,14 +19,14 @@
       register: datecmd
       tags: datecmd
       
-    - name: Get facts
-      panos_facts:
-        provider: '{{ device }}'
+#     - name: Get facts
+#       panos_facts:
+#         provider: '{{ device }}'
 
-    - name: Create my first address object
-      panos_address_object:
-        provider: '{{ device }}'
-        name: 'Hello-World-new'
-        value: '1.1.1.1'
-        description: 'My very first address object'
+#     - name: Create my first address object
+#       panos_address_object:
+#         provider: '{{ device }}'
+#         name: 'Hello-World-new'
+#         value: '1.1.1.1'
+#         description: 'My very first address object'
 
