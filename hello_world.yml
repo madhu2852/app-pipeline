@@ -1,1 +1,26 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: yes
+
+  vars:
+    device:
+      ip_address: "{{ ip_address }}"
+      api_key: "{{ api_key }}"
+
+  collections:
+    - paloaltonetworks.panos
+
+  tasks:
+
+    - name: Get facts
+      panos_facts:
+        provider: '{{ device }}'
+
+    - name: Create my first address object
+      panos_address_object:
+        provider: '{{ device }}'
+        name: 'Hello-World-new'
+        value: '1.1.1.1'
+        description: 'My very first address object'
 
