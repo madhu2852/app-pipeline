@@ -10,23 +10,58 @@
 
   collections:
     - paloaltonetworks.panos
-
+  
   tasks:
 
-    - name: Check Date with Shell command
-      shell:
-         "whoami"
-      register: datecmd
-      tags: datecmd
-      
-    - name: Get facts
-      panos_facts:
+    - name: Configure service object - app fqdn
+      paloaltonetworks.panos.panos_service_object:
         provider: '{{ device }}'
+        name: "{{ APP_FQDN }}"
+        protocol: 'tcp'
+        destination_port: "{{ TF_VAR_available_port }}"
+        commit: false
 
-    - name: Create my first address object
-      panos_address_object:
+    - name: Create address object - internal alb
+      paloaltonetworks.panos.panos_address_object:
         provider: '{{ device }}'
-        name: 'Hello-World-new'
-        value: '1.1.1.1'
-        description: 'My very first address object'
+        name: "{{ APP_FQDN }}-internal-alb"
+        value: "{{ INTERNAL_ALB }}"
+        address_type: 'fqdn'
+        commit: false
 
+    - name: Create address object - subnet az1
+      paloaltonetworks.panos.panos_address_object:
+        provider: '{{ device }}'
+        name: "int-vpc-sn-az1"
+        value: "{{ internal_vpc_subnet_az1_cidr }}"
+        address_type: 'ip-netmask'
+        commit: false
+
+    # - name: Create address object - subnet az2
+    #   paloaltonetworks.panos.panos_address_object:
+    #     provider: '{{ device }}'
+    #     name: "int-vpc-sn-az2"
+    #     value: "{{ internal_vpc_subnet_az2_cidr }}"
+    #     address_type: 'ip-netmask'
+    #     commit: false
+    #     register: az2_ao_name
+
+    # - name: Configure static route - az1
+    #   paloaltonetworks.panos.panos_static_route:
+    #     provider: '{{ device }}'
+    #     name: "{{ APP_FQDN }}-az1"
+    #     destination: "{{ az2_subnet_cidr.stdout }}"
+    #     interface: 'ethernet1/2'
+    #     nexthop_type: 'ip-address'
+    #     nexthop: "10.0.0.1"
+    #     virtual_router: "default"
+
+    # - name: Configure static route - az2
+    #   paloaltonetworks.panos.panos_static_route:
+    #     provider: '{{ device }}'
+    #     name: "{{ APP_FQDN }}-az2"
+    #     destination: "{{ az2_subnet_cidr.stdout }}"
+    #     interface: 'ethernet1/2'
+    #     nexthop_type: 'ip-address'
+    #     nexthop: "10.0.0.2"
+    #     virtual_router: "default"
