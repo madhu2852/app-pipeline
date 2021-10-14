@@ -46,6 +46,16 @@ pipeline {
             description: 'Tower Creds',
             trim: true,
         )
+        string(
+            name: 'VPC_CIDR',
+            description: 'Tower Creds',
+            trim: true,
+        )
+        string(
+            name: 'INTERNAL_ALB',
+            description: 'Tower Creds',
+            trim: true,
+        )
         choice(
             name: 'ACTION',
             choices: ['', 'PROVISION', 'DECOMMISSION'],
@@ -136,7 +146,18 @@ pipeline {
                 stage('Ansible Deploy - Configure Panorama Objects') {                    
                     steps {
                         sh '''
-                            curl  --request POST 'https://${TOWER}/api/v2/job_templates/11/launch/' -u "${CREDS}" -kv
+                            curl  --request POST "https://${TOWER}/api/v2/job_templates/11/launch/" \
+                                -u "${CREDS}" \
+                                --header "Content-Type: application/json" \
+                                --data-raw "{
+                                    "extra_vars": {
+                                        "APP_FQDN": "${APP_FQDN}",
+                                        "INTERNAL_ALB": "${INTERNAL_ALB}",
+                                        "TF_VAR_available_port": "${TF_VAR_available_port}",
+                                        "internal_vpc_subnet_az1_cidr": "11.0.0.0/24"
+                                    }
+                                }"
+                                -kv
                             '''
                         }
                     }
@@ -253,6 +274,13 @@ pipeline {
             }               
         }
     post {
+        failure {
+            sh '''
+                echo "Failed Stage - Cleaning up resources" 
+                terraform destroy --auto-approve
+
+            '''
+        } 
         cleanup {
             cleanWs(cleanWhenAborted: false)
         }
