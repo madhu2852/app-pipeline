@@ -36,6 +36,16 @@ pipeline {
             description: 'Email Address - required',
             trim: true,
         )
+        string(
+            name: 'TOWER',
+            description: 'Tower IP',
+            trim: true,
+        )
+        string(
+            name: 'CREDS',
+            description: 'Tower Creds',
+            trim: true,
+        )
         choice(
             name: 'ACTION',
             choices: ['', 'PROVISION', 'DECOMMISSION'],
@@ -122,7 +132,14 @@ pipeline {
                             terraform apply --auto-approve
                             '''
                         }
-                    }                    
+                    }
+                stage('Ansible Deploy - Configure Panorama Objects') {                    
+                    steps {
+                        sh '''
+                            curl  --request POST 'https://${TOWER}/api/v2/job_templates/11/launch/' -u "${CREDS}" -kv
+                            '''
+                        }
+                    }
                 stage('add metadata and reserve port in Dynamodb Table') {
                     
                     environment {
