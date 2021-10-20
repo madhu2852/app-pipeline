@@ -351,4 +351,27 @@ def lambda_handler(event, context):
         message = 'LIFECYCLE TRANSITION CONDITION NOT MET.'
         logger.error(message)
         return message
+======
 
+resource "aws_lambda_function" "attach-eni" {
+  filename      = "${path.module}/attach-eni-working.zip"
+  function_name = "attach-eni"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "lambda_function.lambda_handler"
+  source_code_hash = filebase64sha256("${path.module}/attach-eni-working.zip")
+  runtime = "python3.8"
+  timeout = 180
+  depends_on = [
+    aws_iam_role.lambda_role
+  ]
+}
+
+resource "aws_lambda_permission" "event_bridge" {
+  statement_id  = "AllowExecutionFromEvents"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.attach-eni.function_name
+  principal     = "events.amazonaws.com"
+  depends_on = [
+    aws_lambda_function.attach-eni
+  ]
+}
