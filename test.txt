@@ -1,0 +1,354 @@
+resource "aws_launch_template" "myasgtmpl" {
+  name_prefix   = "myasgtmpl"
+  image_id      = "ami-0dc2d3e4c0f9ebd18"
+  instance_type = "t3.medium"
+  key_name = var.ec2_key_name # user input needed
+  network_interfaces {
+    associate_public_ip_address = false # launch in data subnet
+    device_index = 0
+    security_groups = [var.data_sg]
+  }
+}
+
+resource "aws_autoscaling_group" "myasg" {
+  name                      = "myasg"
+  max_size                  = 3
+  min_size                  = 0
+  health_check_grace_period = 300
+  health_check_type         = "EC2"
+  desired_capacity          = 0
+  force_delete              = true
+  initial_lifecycle_hook {
+    name                   = "myhook"
+    default_result         = "ABANDON"
+    heartbeat_timeout      = 300
+    lifecycle_transition   = "autoscaling:EC2_INSTANCE_LAUNCHING"
+  }
+  launch_template {
+    id      = aws_launch_template.myasgtmpl.id
+    version = "$Latest"
+  }
+  vpc_zone_identifier       = [var.data_subnet_az1, var.data_subnet_az2]
+  timeouts {
+    delete = "2m"
+  }
+  tag {
+    key = "Name"
+    value = "myasg"
+    propagate_at_launch = false
+  }
+  wait_for_capacity_timeout = "5m"
+}
+
+resource "aws_cloudwatch_event_rule" "myeventrule" {
+  name        = "attach-eni-lambda-trigger"
+  description = "Invoke Lambda"
+  event_pattern = <<EOF
+{
+  "source": [
+    "aws.autoscaling"
+  ],
+  "detail-type": [
+    "EC2 Instance-launch Lifecycle Action",
+    "EC2 Instance-terminate Lifecycle Action"
+  ]
+}
+EOF
+}
+# EC2 TERMINATION LIFECYCLE HOOK
+
+resource "aws_autoscaling_lifecycle_hook" "myasg-terminate" {
+  name                   = "myasg-terminate"
+  autoscaling_group_name = aws_autoscaling_group.myasg.name
+  default_result         = "ABANDON"
+  heartbeat_timeout      = 300
+  lifecycle_transition   = "autoscaling:EC2_INSTANCE_TERMINATING"
+}
+
+resource "aws_cloudwatch_event_target" "lambda-target" {
+  target_id = "InvokeLambdaAttachENI"
+  rule      = aws_cloudwatch_event_rule.myeventrule.name
+  arn       = var.lambda_arn
+  depends_on = [
+    aws_cloudwatch_event_rule.myeventrule
+  ]
+}
+
+===========
+import boto3
+import os
+import json
+import logging
+import time
+
+from botocore.exceptions import ClientError
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+try:
+    autoscaling = boto3.client('autoscaling')
+    ec2 = boto3.client('ec2')
+except ClientError as e:
+    message = 'ERROR CONNECTING TO CLIENT: {}'.format(e)
+    logger.error(message)
+    raise Exception(message)
+    
+def send_lifecycle_action(event, result):
+    try:
+        response = autoscaling.complete_lifecycle_action(
+            LifecycleHookName=event['detail']['LifecycleHookName'],
+            AutoScalingGroupName=event['detail']['AutoScalingGroupName'],
+            LifecycleActionToken=event['detail']['LifecycleActionToken'],
+            LifecycleActionResult=result,
+            InstanceId=event['detail']['EC2InstanceId']
+        )
+        logger.info(response)
+    except ClientError as e:
+        message = 'ERROR SENDING LIFECYCLE ACTION EVENT TO ASG. MESSAGE:- {}'.format(e)
+        logger.error(message)
+        raise Exception(message)
+    return
+
+def remove_interfaces(event):
+    logger.info('REMOVE NETWORK INTERFACES ON EC2: {}'.format(event['detail']['EC2InstanceId']))
+    # GET EC2 ID FROM EVENT
+    instance_id = event['detail']['EC2InstanceId']
+    try:
+        eni_ids = []
+        eni_attach_ids = []
+    # GET NETWORK INTERFACES DETAILS FROM EC2    
+        response = ec2.describe_instances(
+            InstanceIds=[
+                str(instance_id)
+            ],
+        )
+        raw_data = response['Reservations'][0]['Instances'][0]['NetworkInterfaces']
+        
+        for eni in raw_data:
+            if eni['Attachment']['DeviceIndex'] != 0:
+                eni_ids.append(eni['NetworkInterfaceId'])
+                eni_attach_ids.append(eni['Attachment']['AttachmentId'])
+
+    # DETACH NETWORK INTERFACES FROM EC2 BEFORE DELETING
+
+        for eni_to_detach in eni_attach_ids:
+            logger.info('DETACHING ENI: {} BEFORE DELETE.'.format(eni_to_detach))
+            detach_enis = ec2.detach_network_interface(
+                AttachmentId=str(eni_to_detach),
+                Force=True
+            )
+            logger.info('ENI: {} DETACHED SUCCESSFULLY.'.format(eni_to_detach))
+
+    # REMOVE NETWORK INTERFACES 
+
+        for eni_to_delete in eni_ids:
+            waiter = ec2.get_waiter('network_interface_available')
+            wait = waiter.wait(NetworkInterfaceIds=[str(eni_to_delete)])
+            logger.info('REMOVING ENI: {}'.format(eni_to_delete))       
+            remove_eni = ec2.delete_network_interface(
+                NetworkInterfaceId=str(eni_to_delete),
+            )
+            logger.info('SUCCESSFULLY REMOVED ENI {}; STATUS: {}'.format(eni_to_delete,remove_eni))    
+        return
+
+    except Exception as e:
+        message = 'FAILED TO DETACH/REMOVE NETWORK INTERFACES. MESSAGE: {}'.format(e)
+        logger.error(message)
+        raise Exception(message)
+        
+def run_command(event):
+
+    # GET EC2 ID FROM EVENT
+
+    logger.info('CREATE NETWORK INTERFACE FOR EC2: {}'.format(event['detail']['EC2InstanceId']))
+
+    instance_id = event['detail']['EC2InstanceId']
+   
+    try:
+
+    # GET EC2 AVAILABILITY ZONE ID 
+
+        get_instance_az = ec2.describe_instances(
+            Filters=[
+                    {
+                        'Name': 'instance-state-name',
+                        'Values': [
+                            'running',
+                        ]
+                    },
+                ],
+            InstanceIds=[
+                    instance_id,
+                ],)
+
+        instance_az = get_instance_az['Reservations'][0]['Instances'][0]['Placement']['AvailabilityZone']
+        
+        logger.info('CREATING NETWORK INTERFACE IN AZ: {}'.format(instance_az))
+
+        # GET MGMT SUBNET ID BASED ON TAG NAME
+
+        get_mgmt_subnet = ec2.describe_subnets(
+            Filters=[
+                        {
+                            'Name': 'tag:Name',
+                            'Values': [
+                                'mgmt-subnet-az1','mgmt-subnet-az2'
+                                ]
+                        },
+                        {
+                            'Name': 'availabilityZone',
+                            'Values': [
+                                instance_az,
+                            ]
+                        },        
+                    ],
+                )
+
+        mgmt_subent_id = get_mgmt_subnet['Subnets'][0]['SubnetId']
+
+        # GET PRIVATE SUBNET ID BASED ON TAG NAME
+
+        get_private_subnet = ec2.describe_subnets(
+            Filters=[
+                        {
+                            'Name': 'tag:Name',
+                            'Values': [
+                                'private-subnet-az1','private-subnet-az2'
+                                ]
+                        },
+                        {
+                            'Name': 'availabilityZone',
+                            'Values': [
+                                instance_az,
+                            ]
+                        },
+                    ],
+                )
+
+        private_subnet_id = get_private_subnet['Subnets'][0]['SubnetId']
+        
+        # CREATE MGMT NETWORK INTERFACE
+        time.sleep(10)
+        logger.info('CREATE MGMT NETWORK INTERFACE IN SUBNET: {}'.format(mgmt_subent_id))        
+        create_eni_mgmt = ec2.create_network_interface(
+                Description='AWS Lambda Created ENI - MGMT',
+                SubnetId=str(mgmt_subent_id),
+                TagSpecifications=[
+                        {
+                            'ResourceType': 'network-interface',
+                            'Tags': [
+                                {
+                                    'Key': 'Name',
+                                    'Value': "mgmt-eni-"+instance_az
+                                    },
+                                ]
+                            },
+                        ],
+                    )
+        mgmt_eni_id = create_eni_mgmt['NetworkInterface']['NetworkInterfaceId']
+        logger.info('WAITING FOR MGMT ENI {} TO BECOME AVAILABLE.'.format(mgmt_eni_id))
+        waiter = ec2.get_waiter('network_interface_available')
+        wait = waiter.wait(NetworkInterfaceIds=[str(mgmt_eni_id)])
+        logger.info('MGMT ENI {} IS NOW AVAILABLE TO ATTACH'.format(mgmt_eni_id))
+        
+        # CREATE PRIVATE NETWORK INTERFACE
+        time.sleep(10)
+        logger.info('CREATE PRIVATE NETWORK INTERFACE IN SUBNET: {}'.format(private_subnet_id))
+        create_eni_private = ec2.create_network_interface(
+                Description='AWS Lambda Created ENI - Private',
+                SubnetId=str(private_subnet_id),
+                TagSpecifications=[
+                        {
+                            'ResourceType': 'network-interface',
+                            'Tags': [
+                                {
+                                    'Key': 'Name',
+                                    'Value': "private-eni-"+instance_az
+                                    },
+                                ]
+                            },
+                        ],
+                    )
+        eni_id_private = create_eni_private['NetworkInterface']['NetworkInterfaceId']
+        logger.info('WAITING FOR PRIVATE ENI {} TO BECOME AVAILABLE.'.format(eni_id_private))        
+        waiter = ec2.get_waiter('network_interface_available')
+        wait = waiter.wait(NetworkInterfaceIds=[str(eni_id_private)])
+        logger.info('PRIVATE ENI {} IS NOW AVAILABLE TO ATTACH'.format(eni_id_private))
+
+        #ATTACH MGMT ENI TO EC2
+
+        logger.info('ATTACHING MGMT NETWORK INTERFACE: {} TO THE EC2: {}'.format(mgmt_eni_id,instance_id))
+        attach_eni_mgmt = ec2.attach_network_interface(
+                DeviceIndex=1,
+                NetworkInterfaceId=mgmt_eni_id,
+                DryRun=False,
+                InstanceId=instance_id,
+                )                
+        if attach_eni_mgmt['ResponseMetadata']['HTTPStatusCode'] == 200:
+            message = 'SUCCESSFULLY ATTACHED MGMT ENI TO THE EC2'
+            logger.info(message)
+        else:
+            message = 'MGMT NETWORK INTERFACE ATTACH FAILED!!!!!'
+            logger.error(message)
+
+        #ATTACH PRIVATE NETWORK INTERFACE TO EC2
+
+        logger.info('ATTACHING PRIVATE NETWORK INTERFACE: {} TO THE EC2: {}'.format(eni_id_private,instance_id))
+        attach_eni_private = ec2.attach_network_interface(
+                DeviceIndex=2,
+                NetworkInterfaceId=eni_id_private,
+                DryRun=False,
+                InstanceId=instance_id,
+                )                
+        if attach_eni_private['ResponseMetadata']['HTTPStatusCode'] == 200:
+            message = 'SUCCESSFULLY ATTACHED PRIVATE ENI TO THE EC2'
+            logger.info(message)
+        else:
+            message = 'MGMT NETWORK INTERFACE ATTACH FAILED!!!!!'
+            logger.error(message)
+
+        return
+
+    except Exception as e:
+        message = 'NETWORK INTERFACE CREATION AND ATTACHMENT FAILED: {}'.format(e)
+        logger.error(message)
+        raise Exception(message)
+
+def lambda_handler(event, context):
+
+    message = 'ASG LIFECYCLE EVENT RECEIVED. EVENT DATA:- {}'.format(event)
+    logger.info(message)
+
+    if event['detail']['LifecycleTransition'] == "autoscaling:EC2_INSTANCE_LAUNCHING":
+        try:
+            run_command(event)
+            send_lifecycle_action(event, 'CONTINUE')
+            message = 'SUCCESS: LIFECYCLE ACTION COMPLETED'
+            logger.info(message)
+            return message
+
+        except Exception as e:
+            send_lifecycle_action(event, 'ABANDON')
+            message = 'FAILED: LIFECYCLE ACTION FAILED. MESSAGE: {}'.format(e)
+            logger.error(message)            
+            raise Exception(message)
+
+    elif event['detail']['LifecycleTransition'] == "autoscaling:EC2_INSTANCE_TERMINATING":
+        try:
+            remove_interfaces(event)
+            send_lifecycle_action(event, 'CONTINUE')
+            message = 'SUCCESS: LIFECYCLE ACTION COMPLETED'
+            logger.info(message)
+            return message
+
+        except Exception as e:
+            send_lifecycle_action(event, 'ABANDON')
+            message = 'FAILED: LIFECYCLE ACTION FAILED. MESSAGE: {}'.format(e)
+            logger.error(message)            
+            raise Exception(message)
+    else:
+        message = 'LIFECYCLE TRANSITION CONDITION NOT MET.'
+        logger.error(message)
+        return message
+
