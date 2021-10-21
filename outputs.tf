@@ -15,3 +15,9 @@ output "lstnr_rule_arn" {
 output "target_group_arn" {
     value = aws_lb_target_group.public_alb_app.arn
 }
+output "INTERNAL_VPC_SUBNET_AZ1" {
+  value       = cidrsubnet(var.VPC_CIDR, 1, 0)
+}
+output "INTERNAL_VPC_SUBNET_AZ2" {
+  value       = cidrsubnet(var.VPC_CIDR, 1, 1)
+}
