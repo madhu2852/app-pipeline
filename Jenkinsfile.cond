@@ -56,6 +56,11 @@ pipeline {
             description: 'Tower Creds',
             trim: true,
         )
+        string(
+            name: 'ACC',
+            description: 'Tower Creds',
+            trim: true,
+        )
         choice(
             name: 'ACTION',
             choices: ['', 'PROVISION', 'DECOMMISSION'],
@@ -77,7 +82,7 @@ pipeline {
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
                             env.DDB_TABLE = "dynamoDB-dev"
                             env.ENVIRONMENT = "DEV"
-                            env.acc_no = "yyy"
+                            env.acc_no = env.ACC
                             break
                         case 'origin/stage':
                             env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
@@ -90,7 +95,7 @@ pipeline {
                             env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
                             env.DDB_TABLE = "dynamoDB-prd"
                             env.ENVIRONMENT = "PRD"
-                            env.acc_no = "xxx"              
+                            env.acc_no = env.ACC
                             break
                         default:
                             error('Invalid Input')
