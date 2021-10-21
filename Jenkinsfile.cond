@@ -69,6 +69,7 @@ pipeline {
                     env.TF_VAR_APP_FQDN = env.APP_FQDN
                     env.TF_VAR_CONTACT = env.CONTACT
                     env.TF_VAR_APP_CERT_NAME = env.APP_CERT_NAME
+                    env.TF_VAR_VPC_CIDR = env.VPC_CIDR
                     credential_id = 'aws-jenkins-user'
                     switch(env.GIT_BRANCH) {
                         case 'origin/develop':
@@ -114,7 +115,7 @@ pipeline {
             stages {
                 stage('Validate AWS Services (terraform plan)') {
                     environment {
-                        TF_VAR_available_port = """${sh(
+                        TF_VAR_AVAILABLE_PORT = """${sh(
                             returnStdout: true,
                             script: '''
                                 set +x
@@ -126,10 +127,9 @@ pipeline {
                     
                     steps {
                         script {
-                            env.TF_VAR_available_port = "${TF_VAR_available_port}"
+                            env.TF_VAR_AVAILABLE_PORT = "${TF_VAR_AVAILABLE_PORT}"
                         }
                         sh '''
-                            env 
                             terraform init &&\
                             terraform plan
                             '''
@@ -143,7 +143,21 @@ pipeline {
                             '''
                         }
                     }
-                stage('Ansible Deploy - Configure Panorama Objects') {                    
+                stage('Ansible Deploy - Configure Panorama Objects') {
+                    environment {
+                        INTERNAL_VPC_SUBNET_AZ1 = """${sh(
+                            returnStdout: true,
+                            script: '''
+                                terraform output -json INTERNAL_VPC_SUBNET_AZ1 | jq -r '.'
+                            '''    
+                        ).trim()}"""        
+                        INTERNAL_VPC_SUBNET_AZ2 = """${sh(
+                            returnStdout: true,
+                            script: '''
+                                terraform output -json INTERNAL_VPC_SUBNET_AZ2 | jq -r '.'
+                            '''    
+                        ).trim()}"""
+                    }              
                     steps {
                         sh """
                             curl  -kv --request POST "https://${TOWER}/api/v2/job_templates/11/launch/" \
@@ -152,9 +166,10 @@ pipeline {
                                 --data-raw '{
                                     "extra_vars": {
                                         "APP_FQDN": "${APP_FQDN}",
-                                        "INTERNAL_ALB": "${NTERNAL_ALB}",
-                                        "TF_VAR_available_port": "${TF_VAR_available_port}",
-                                        "internal_vpc_subnet_az1_cidr": "11.0.0.0/24"
+                                        "INTERNAL_ALB": "${INTERNAL_ALB}",
+                                        "TF_VAR_AVAILABLE_PORT": "${TF_VAR_AVAILABLE_PORT}",
+                                        "INTERNAL_VPC_SUBNET_AZ1": "${INTERNAL_VPC_SUBNET_AZ1}"
+                                        "INTERNAL_VPC_SUBNET_AZ2": "${INTERNAL_VPC_SUBNET_AZ2}"
                                     }
                                 }' || echo "curl command is completed"                            
                             """
@@ -207,7 +222,7 @@ pipeline {
                             pipenv run python3 ./updateitem.py \
                                 --region=${REGION} \
                                 --table_name=${DDB_TABLE} \
-                                --portnum=${TF_VAR_available_port} \
+                                --portnum=${TF_VAR_AVAILABLE_PORT} \
                                 --fqdn=${APP_FQDN} \
                                 --alb=${PUBLIC_ALB_ARN} \
                                 --cert=${INTERNAL_CERT_ARN}  \
