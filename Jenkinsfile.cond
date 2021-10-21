@@ -173,7 +173,7 @@ pipeline {
                                         "APP_FQDN": "${APP_FQDN}",
                                         "INTERNAL_ALB": "${INTERNAL_ALB}",
                                         "TF_VAR_AVAILABLE_PORT": "${TF_VAR_AVAILABLE_PORT}",
-                                        "INTERNAL_VPC_SUBNET_AZ1": "${INTERNAL_VPC_SUBNET_AZ1}"
+                                        "INTERNAL_VPC_SUBNET_AZ1": "${INTERNAL_VPC_SUBNET_AZ1}",
                                         "INTERNAL_VPC_SUBNET_AZ2": "${INTERNAL_VPC_SUBNET_AZ2}"
                                     }
                                 }' || echo "curl command is completed"                            
