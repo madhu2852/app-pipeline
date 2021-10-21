@@ -4,13 +4,13 @@ provider "aws" {
 ### CREATE TARGET GROUP FOR THE APP ###
 
 resource "aws_lb_target_group" "public_alb_app" {
-  name     = "pub-alb-app-${var.available_port}"
-  port     = tonumber(var.available_port)
+  name     = "pub-alb-app-${var.AVAILABLE_PORT}"
+  port     = tonumber(var.AVAILABLE_PORT)
   protocol = "HTTP"
   target_type = "instance"
   vpc_id   = data.aws_vpc.ingress_vpc_id.id # use data resource to pull the info
   health_check {
-    port = var.available_port
+    port = var.AVAILABLE_PORT
     protocol = "HTTP"
     interval = 30
     timeout = 20
