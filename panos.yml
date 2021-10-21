@@ -13,12 +13,32 @@
   
   tasks:
 
+    - name: Get first IP address from subnet CIDR AZ1
+      debug:
+         msg: "{{ INTERNAL_VPC_SUBNET_AZ1 | ansible.netcommon.nthhost(1) }}"
+      register: FIRST_IP_AZ1
+      
+    - name: Convert IP to HEX String AZ1
+      debug:
+         msg: '{{ FIRST_IP_AZ1.msg | ansible.netcommon.ip4_hex }}'
+      register: HEX_IP_AZ1
+
+    - name: Get first IP address from subnet CIDR AZ2
+      debug:
+         msg: "{{ INTERNAL_VPC_SUBNET_AZ1 | ansible.netcommon.nthhost(1) }}"
+      register: FIRST_IP_AZ2
+      
+    - name: Convert IP to HEX String AZ2
+      debug:
+         msg: '{{ FIRST_IP_AZ2.msg | ansible.netcommon.ip4_hex }}'
+      register: HEX_IP_AZ2
+      
     - name: Configure service object - app fqdn
       paloaltonetworks.panos.panos_service_object:
         provider: '{{ device }}'
         name: "{{ APP_FQDN }}"
         protocol: 'tcp'
-        destination_port: "{{ TF_VAR_available_port }}"
+        destination_port: "{{ TF_VAR_AVAILABLE_PORT }}"
         commit: false
 
     - name: Create address object - internal alb
@@ -32,38 +52,39 @@
     - name: Create address object - subnet az1
       paloaltonetworks.panos.panos_address_object:
         provider: '{{ device }}'
-        name: "int-vpc-sn-az1"
-        value: "{{ internal_vpc_subnet_az1_cidr }}"
+        name: "{{ HEX_IP_AZ1.msg }}_add_obj_az1"
+        value: "{{ INTERNAL_VPC_SUBNET_AZ1 }}"
         address_type: 'ip-netmask'
         commit: false
       register: az1_subnet_cidr  
 
-    # - name: Create address object - subnet az2
-    #   paloaltonetworks.panos.panos_address_object:
-    #     provider: '{{ device }}'
-    #     name: "int-vpc-sn-az2"
-    #     value: "{{ internal_vpc_subnet_az2_cidr }}"
-    #     address_type: 'ip-netmask'
-    #     commit: false
-    #     register: az2_ao_name
+    - name: Create address object - subnet az2
+      paloaltonetworks.panos.panos_address_object:
+        provider: '{{ device }}'
+        name: "{{ HEX_IP_AZ2.msg }}_add_obj_az2"
+        value: "{{ INTERNAL_VPC_SUBNET_AZ2 }}"
+        address_type: 'ip-netmask'
+        commit: false
+        register: az2_subnet_cidr
 
     - name: Configure static route - az1
       paloaltonetworks.panos.panos_static_route:
         provider: '{{ device }}'
-        name: "{{ APP_FQDN }}-az1"
+        name: "{{ HEX_IP_AZ1.msg }}_static_route_az1"
         destination: "{{ az1_subnet_cidr.diff.after | regex_search('(?<=<entry name=\\\").*(?=\\\">)') }}"
-        interface: 'ethernet1/2'
         nexthop_type: 'ip-address'
         nexthop: "10.0.0.1"
         virtual_router: "default"
+        template_stack: ansible-demo
       when: '{{ az1_subnet_cidr.changed }} == True'  
 
-    # - name: Configure static route - az2
-    #   paloaltonetworks.panos.panos_static_route:
-    #     provider: '{{ device }}'
-    #     name: "{{ APP_FQDN }}-az2"
-    #     destination: "{{ az2_subnet_cidr.stdout }}"
-    #     interface: 'ethernet1/2'
-    #     nexthop_type: 'ip-address'
-    #     nexthop: "10.0.0.2"
-    #     virtual_router: "default"
+    - name: Configure static route - az2
+      paloaltonetworks.panos.panos_static_route:
+        provider: '{{ device }}'
+        name: "{{ HEX_IP_AZ2.msg }}_static_route_az2"
+        destination: "{{ az2_subnet_cidr.diff.after | regex_search('(?<=<entry name=\\\").*(?=\\\">)') }}"
+        nexthop_type: 'ip-address'
+        nexthop: "10.0.0.2"
+        virtual_router: "default"
+        template_stack: ansible-demo
+      when: '{{ az2_subnet_cidr.changed }} == True'   
