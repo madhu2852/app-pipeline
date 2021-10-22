@@ -12,12 +12,7 @@
     - paloaltonetworks.panos
   
   tasks:
-  
-    - name: Install the latest version of Apache
-      yum:
-        name: python-netaddr
-        state: present
-      
+       
     - name: Get first IP address from subnet CIDR AZ1
       debug:
          msg: "{{ INTERNAL_VPC_SUBNET_AZ1 | ansible.netcommon.nthhost(1) }}"
