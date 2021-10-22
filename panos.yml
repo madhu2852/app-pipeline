@@ -13,8 +13,10 @@
   
   tasks:
   
-    - name: Execute the command in remote shell; stdout goes to the specified file on the remote.
-      shell: pip3 install netaddr
+    - name: Install the latest version of Apache
+      yum:
+        name: python-netaddr
+        state: latest
       
     - name: Get first IP address from subnet CIDR AZ1
       debug:
