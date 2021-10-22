@@ -16,7 +16,7 @@
     - name: Install the latest version of Apache
       yum:
         name: python-netaddr
-        state: latest
+        state: present
       
     - name: Get first IP address from subnet CIDR AZ1
       debug:
