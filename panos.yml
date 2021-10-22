@@ -65,7 +65,7 @@
         value: "{{ INTERNAL_VPC_SUBNET_AZ2 }}"
         address_type: 'ip-netmask'
         commit: false
-        register: az2_subnet_cidr
+      register: az2_subnet_cidr
 
     - name: Configure static route - az1
       paloaltonetworks.panos.panos_static_route:
