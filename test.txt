@@ -26,11 +26,11 @@ data "aws_iam_policy_document" "lambda_policy" {
           "ec2:CreateTags",                    
       ]
     resources = [
-      "arn:aws:autoscaling:*:552777967030:autoScalingGroup:*:autoScalingGroupName/*",
-      "arn:aws:ec2:*:552777967030:instance/*",
-      "arn:aws:ec2:*:552777967030:network-interface/*",
-      "arn:aws:ec2:*:552777967030:subnet/*",
-      "arn:aws:ec2:*:552777967030:security-group/*"      
+      "arn:aws:autoscaling:*:xxx:autoScalingGroup:*:autoScalingGroupName/*",
+      "arn:aws:ec2:*:xxx:instance/*",
+      "arn:aws:ec2:*:xxx:network-interface/*",
+      "arn:aws:ec2:*:xxx:subnet/*",
+      "arn:aws:ec2:*:xxx:security-group/*"      
     ]
   }
   statement {
