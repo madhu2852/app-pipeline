@@ -72,3 +72,17 @@ resource "aws_iam_role" "lambda_role" {
   assume_role_policy = data.aws_iam_policy_document.lambda-assume-role-policy.json
   managed_policy_arns = [aws_iam_policy.lambda_policy.arn]
 }
+
+        get_mgmt_sg_id = ec2.describe_security_groups(
+            Filters=[
+                {
+                    'Name': 'tag:Name',
+                    'Values': [
+                        'lambda-test',
+                    ]
+                },
+            ]
+        )        
+        mgmt_sg_id = get_mgmt_sg_id['SecurityGroups'][0]['GroupId']
+        
+        logger.info('SECURITY GROUP ID TO ATTACH TO THE ENI: {}'.format(mgmt_sg_id)) 
