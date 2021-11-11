@@ -1,0 +1,292 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurperClassic
+
+pipeline {
+    agent any
+    options {
+        timestamps()
+        buildDiscarder(logRotator(daysToKeepStr: '90'))
+        disableConcurrentBuilds()
+    }
+    environment {
+        REGION = "us-east-1"
+        PIP_ENV = """${sh(
+                    returnStdout: true,
+                    script: '''
+                        set +x
+                        export PATH=~/.local/bin:$PATH
+                        pip3 install pipenv --user > /dev/null
+                        pipenv update > /dev/null
+                        pipenv install boto3 > /dev/null
+                    '''    
+                        ).trim()}"""        
+    }
+    parameters {
+        string(
+            name: 'APP_FQDN',
+            description: 'application fqdn',
+            trim: true,
+        )
+        string(
+            name: 'APP_CERT_NAME',
+            description: '''application certificate name - use Tag Name: Value''',
+        )
+        string(
+            name: 'CONTACT',
+            description: 'Email Address - required',
+            trim: true,
+        )
+        string(
+            name: 'VPC_CIDR',
+            description: 'Application VPC CIDR - required',
+            trim: true,
+        )
+        string(
+            name: 'INTERNAL_ALB',
+            description: 'Internal ELB - DNS Name',
+            trim: true,
+        )
+        choice(
+            name: 'ACTION',
+            choices: ['', 'PROVISION', 'DECOMMISSION'],
+            description: '''PROVISION: Create Objects. DECOMMISSION: Delete Objects based on APP FQDN''',
+        )
+    }
+    stages {
+        stage('Preparation') {
+            steps {
+                script {
+                    env.TF_VAR_APP_FQDN = env.APP_FQDN
+                    env.TF_VAR_CONTACT = env.CONTACT
+                    env.TF_VAR_APP_CERT_NAME = env.APP_CERT_NAME
+                    env.TF_VAR_VPC_CIDR = env.VPC_CIDR
+                    credential_id = 'aws-jenkins-user' // 
+                    switch(env.GIT_BRANCH) {
+                        case 'origin/develop':
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-dev"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-dev"
+                            env.DDB_TABLE = "dynamoDB-dev"
+                            env.ENVIRONMENT = "DEV"
+                            env.ACC_NUM = "CZ-DEV-ACC-NUM" // static numeric value will be provided
+                            break
+                        case 'origin/stage':
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-stg"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-stg"
+                            env.DDB_TABLE = "dynamoDB-stg"
+                            env.ENVIRONMENT = "STG"
+                            env.ACC_NUM = "CZ-STG-ACC-NUM" // static numeric value will be provided
+                            break
+                        case 'origin/master':
+                            env.TF_VAR_PUBLIC_ALB_NAME = "public-alb-prd"
+                            env.TF_VAR_PUBLIC_ALB_LSTNR_NAME = "public-alb-lstnr-prd"
+                            env.DDB_TABLE = "dynamoDB-prd"
+                            env.ENVIRONMENT = "PRD"
+                            env.ACC_NUM = "CP-ACC-NUM" // static numeric value will be provided
+                            break
+                        default:
+                            error('Invalid Input')
+                            break
+                    }
+                    withAWS(credentials: credential_id, roleAccount: ACC_NUM, role: 'jenkins_lc_role'
+
+                    ) {
+                        println "Setting up AWS environment - assume role"
+
+                        env.AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID
+                        env.AWS_SECRET_ACCESS_KEY = env.AWS_SECRET_ACCESS_KEY
+                        env.AWS_SESSION_TOKEN = env.AWS_SESSION_TOKEN
+                        env.AWS_DEFAULT_REGION = env.REGION
+                    }
+                    println "AWS  Credential Setup Completed"
+                }
+            }
+        } 
+        stage('Deploy to AWS') {
+            when { expression { params.ACTION == "PROVISION" } }
+            stages {
+                stage('Validate AWS Services (terraform plan)') {
+                    environment {
+                        TF_VAR_AVAILABLE_PORT = """${sh(
+                            returnStdout: true,
+                            script: '''
+                                set +x
+                                export PATH=~/.local/bin:$PATH
+                                pipenv run python3 ./queryitem.py --env=${ENVIRONMENT} --region=${REGION} --table_name=${DDB_TABLE}
+                            '''    
+                                ).trim()}"""
+                        }
+                    
+                    steps {
+                        script {
+                            env.TF_VAR_AVAILABLE_PORT = "${TF_VAR_AVAILABLE_PORT}"
+                        }
+                        sh '''
+                            terraform init &&\
+                            terraform plan
+                            '''
+                        }
+                    }
+                stage('Configure AWS Services (terraform apply)') {                    
+                    steps {
+                        sh '''
+                            env 
+                            terraform apply --auto-approve
+                            '''
+                        }
+                    }
+                stage('Ansible Deploy - Configure Panorama Objects') { // ANSIBLE TOWER WILL BE USED HERE
+                    environment {
+                        INTERNAL_VPC_SUBNET_AZ1 = """${sh(
+                            returnStdout: true,
+                            script: '''
+                                terraform output -json INTERNAL_VPC_SUBNET_AZ1 | jq -r '.'
+                            '''    
+                        ).trim()}"""        
+                        INTERNAL_VPC_SUBNET_AZ2 = """${sh(
+                            returnStdout: true,
+                            script: '''
+                                terraform output -json INTERNAL_VPC_SUBNET_AZ2 | jq -r '.'
+                            '''    
+                        ).trim()}"""
+                    }              
+                    steps {
+                        sh """
+                            curl  -kv --request POST "https://${TOWER}/api/v2/job_templates/11/launch/" \
+                                -u "${CREDS}" \
+                                --header "Content-Type: application/json" \
+                                --data-raw '{
+                                    "extra_vars": {
+                                        "APP_FQDN": "${APP_FQDN}",
+                                        "INTERNAL_ALB": "${INTERNAL_ALB}",
+                                        "TF_VAR_AVAILABLE_PORT": "${TF_VAR_AVAILABLE_PORT}",
+                                        "INTERNAL_VPC_SUBNET_AZ1": "${INTERNAL_VPC_SUBNET_AZ1}",
+                                        "INTERNAL_VPC_SUBNET_AZ2": "${INTERNAL_VPC_SUBNET_AZ2}"
+                                    }
+                                }' || echo "curl command is completed"                            
+                            """
+                        }
+                    }
+                stage('add metadata and reserve port in Dynamodb Table') {
+                    
+                    environment {
+                        PUBLIC_ALB_ARN = """${sh(
+                        returnStdout: true,
+                        script: '''
+                            terraform output -json public_elb | jq -r '.[0]'
+                        '''    
+                    ).trim()}"""
+                    
+                        INTERNAL_CERT_ARN = """${sh(
+                        returnStdout: true,
+                        script: '''
+                            terraform output -json internal_app_cert | jq -r '.[0]'
+                        '''    
+                    ).trim()}"""
+                    
+                        PUBLIC_ALB_LISTENER = """${sh(
+                        returnStdout: true,
+                        script: '''
+                            terraform output -json public_elb_lstnr | jq -r '.[0]'
+                        '''    
+                    ).trim()}"""
+                    
+                        LISTENER_RULE_ARN = """${sh(
+                        returnStdout: true,
+                        script: '''
+                            terraform output -json lstnr_rule_arn | jq -r '.'
+                        '''    
+                    ).trim()}"""
+                    
+                        TARGET_GROUP_ARN = """${sh(
+                        returnStdout: true,
+                        script: '''
+                            terraform output -json target_group_arn | jq -r '.'
+                        '''    
+                    ).trim()}"""
+                    
+                    }
+                    
+                    steps {
+                        sh '''
+                            env
+                            export PATH=~/.local/bin:$PATH
+                            pipenv run python3 ./updateitem.py \
+                                --region=${REGION} \
+                                --table_name=${DDB_TABLE} \
+                                --portnum=${TF_VAR_AVAILABLE_PORT} \
+                                --fqdn=${APP_FQDN} \
+                                --alb=${PUBLIC_ALB_ARN} \
+                                --cert=${INTERNAL_CERT_ARN}  \
+                                --target_grp_arn=${TARGET_GROUP_ARN} \
+                                --env=${ENVIRONMENT} \
+                                --lstnr_rule_arn=${LISTENER_RULE_ARN} \
+                                --listener_arn=${PUBLIC_ALB_LISTENER} \
+                                --state="in-use"
+                            '''
+                        }
+                    }
+                }            
+           }
+        stage('Remove Objects in AWS') {
+            when { expression { params.ACTION == "DECOMMISSION" } }
+            stages {        
+                stage('Preparation') { // GET THE LOAB BALANCER NAME, PORT and, CERT TO DELETE
+                    environment {
+                        RAW_DATA = """${sh(
+                            returnStdout: true,
+                            script: '''
+                                export PATH=~/.local/bin:$PATH
+                                pipenv run python3 ./get_item.py --region=${REGION} --fqdn=${APP_FQDN}
+                            '''    
+                                ).trim()}"""
+                        }
+                    steps {
+                        script {
+                        def jsonObj = readJSON text: RAW_DATA
+                        env.APP_REGION = jsonObj.region
+                        env.ELB =  jsonObj.alb
+                        env.APP_ENVIRONMENT = jsonObj.environment
+                        env.CERT_ARN = jsonObj.cert
+                        env.PORT = jsonObj.port
+                        env.LISTENER_RULE_ARN = jsonObj.lstnr_rule_arn
+                        env.TG_GROUP_ARN = jsonObj.target_grp_arn
+                        env.FQDN = jsonObj.fqdn
+                        env.DDB_TABLE = jsonObj.table_name
+                        env.LISTENER_ARN = jsonObj.listener_arn
+                        }
+                    }
+                } 
+                stage('Cleanup AWS Resources') {            
+                    steps {
+                        sh '''
+                            export PATH=~/.local/bin:$PATH
+                            pipenv run python3 ./delete_items.py \
+                                --region=${APP_REGION} \
+                                --table_name=${DDB_TABLE} \
+                                --portnum=${PORT} \
+                                --fqdn=${FQDN} \
+                                --alb=${ELB} \
+                                --cert=${CERT_ARN} \
+                                --target_grp_arn=${TG_GROUP_ARN} \
+                                --env=${APP_ENVIRONMENT} \
+                                --lstnr_rule_arn=${LISTENER_RULE_ARN} \
+                                --listener_arn=${LISTENER_ARN} \
+                                --state="not-in-use"
+                        '''
+                        }
+                    }
+                }
+            }               
+        }
+    post {
+        failure {
+            sh '''
+                echo "Failed Stage - Cleaning up resources" 
+                terraform destroy --auto-approve
+            '''
+        } 
+        cleanup {
+            cleanWs(cleanWhenAborted: false)
+        }
+    }    
+}
