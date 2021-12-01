@@ -165,18 +165,18 @@ pipeline {
                     }              
                     steps {
                         sh """
-                            curl  -kv --request POST "https://${TOWER}/api/v2/job_templates/11/launch/" \
-                                -u "${CREDS}" \
-                                --header "Content-Type: application/json" \
-                                --data-raw '{
-                                    "extra_vars": {
-                                        "APP_FQDN": "${APP_FQDN}",
-                                        "INTERNAL_ALB": "${INTERNAL_ALB}",
-                                        "TF_VAR_AVAILABLE_PORT": "${TF_VAR_AVAILABLE_PORT}",
-                                        "INTERNAL_VPC_SUBNET_AZ1": "${INTERNAL_VPC_SUBNET_AZ1}",
-                                        "INTERNAL_VPC_SUBNET_AZ2": "${INTERNAL_VPC_SUBNET_AZ2}"
-                                    }
-                                }' || echo "curl command is completed"                            
+                                #  curl  -kv --request POST "https://${TOWER}/api/v2/job_templates/11/launch/" \
+                                # -u "${CREDS}" \
+                                # --header "Content-Type: application/json" \
+                                # --data-raw '{
+                                #     "extra_vars": {
+                                #         "APP_FQDN": "${APP_FQDN}",
+                                #         "INTERNAL_ALB": "${INTERNAL_ALB}",
+                                #         "TF_VAR_AVAILABLE_PORT": "${TF_VAR_AVAILABLE_PORT}",
+                                #         "INTERNAL_VPC_SUBNET_AZ1": "${INTERNAL_VPC_SUBNET_AZ1}",
+                                #         "INTERNAL_VPC_SUBNET_AZ2": "${INTERNAL_VPC_SUBNET_AZ2}"
+                                #     }
+                                # }' || echo "curl command is completed"                     
                             """
                         }
                     }
