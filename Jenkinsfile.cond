@@ -255,40 +255,45 @@ pipeline {
                                 ).trim()}"""
                         }
                     steps {
-                        script {
-                        def jsonObj = readJSON text: RAW_DATA
-                        env.APP_REGION = jsonObj.region
-                        env.ELB =  jsonObj.alb
-                        env.APP_ENVIRONMENT = jsonObj.environment
-                        env.CERT_ARN = jsonObj.cert
-                        env.PORT = jsonObj.port
-                        env.LISTENER_RULE_ARN = jsonObj.lstnr_rule_arn
-                        env.TG_GROUP_ARN = jsonObj.target_grp_arn
-                        env.FQDN = jsonObj.fqdn
-                        env.DDB_TABLE = jsonObj.table_name
-                        env.LISTENER_ARN = jsonObj.listener_arn
-                        }
+                        sh '''
+                            pipenv run python3 ./get_item.py --region=${REGION} --fqdn=${APP_FQDN}
+                            '''
+                        // script {
+                        // def jsonObj = readJSON text: RAW_DATA
+                        // env.APP_REGION = jsonObj.region
+                        // env.ELB =  jsonObj.alb
+                        // env.APP_ENVIRONMENT = jsonObj.environment
+                        // env.CERT_ARN = jsonObj.cert
+                        // env.PORT = jsonObj.port
+                        // env.LISTENER_RULE_ARN = jsonObj.lstnr_rule_arn
+                        // env.TG_GROUP_ARN = jsonObj.target_grp_arn
+                        // env.FQDN = jsonObj.fqdn
+                        // env.DDB_TABLE = jsonObj.table_name
+                        // env.LISTENER_ARN = jsonObj.listener_arn
+                        // }
                     }
                 } 
-                stage('Cleanup AWS Resources') {            
-                    steps {
-                        sh '''
-                            export PATH=~/.local/bin:$PATH
-                            pipenv run python3 ./delete_items.py \
-                                --region=${APP_REGION} \
-                                --table_name=${DDB_TABLE} \
-                                --portnum=${PORT} \
-                                --fqdn=${FQDN} \
-                                --alb=${ELB} \
-                                --cert=${CERT_ARN} \
-                                --target_grp_arn=${TG_GROUP_ARN} \
-                                --env=${APP_ENVIRONMENT} \
-                                --lstnr_rule_arn=${LISTENER_RULE_ARN} \
-                                --listener_arn=${LISTENER_ARN} \
-                                --state="not-in-use"
-                        '''
-                        }
-                    }
+                // stage('Cleanup AWS Resources') {            
+                //     steps {
+                //         sh '''
+                //             env
+                            
+                //             export PATH=~/.local/bin:$PATH
+                //             pipenv run python3 ./delete_items.py \
+                //                 --region=${APP_REGION} \
+                //                 --table_name=${DDB_TABLE} \
+                //                 --portnum=${PORT} \
+                //                 --fqdn=${FQDN} \
+                //                 --alb=${ELB} \
+                //                 --cert=${CERT_ARN} \
+                //                 --target_grp_arn=${TG_GROUP_ARN} \
+                //                 --env=${APP_ENVIRONMENT} \
+                //                 --lstnr_rule_arn=${LISTENER_RULE_ARN} \
+                //                 --listener_arn=${LISTENER_ARN} \
+                //                 --state="not-in-use"
+                //         '''
+                //         }
+                //     }
                 }
             }               
         }
