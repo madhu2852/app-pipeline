@@ -29,7 +29,8 @@ def get_parameters(region,fqdn):
         )
         return response['Parameters'][0]['Value']
     except IndexError:
-        return None 
+        print("no fqdn found.continuing...")
+        pass 
 
 def main():
 
