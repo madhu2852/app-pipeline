@@ -101,7 +101,7 @@ def update_ddb_ssm(
             }
 
         update_ssm = ssm_client.put_parameter(
-            Name=fqdn,
+            Name="cldnet/"+fqdn,
             Description='not-in-use',
             Value=json.dumps(json_data),
             Overwrite=True,
