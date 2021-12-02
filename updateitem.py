@@ -62,7 +62,7 @@ def update_metadata(region,table_name,portnum,fqdn,alb,cert,target_grp_arn,env,l
             "state": state,
         }
     response = client.put_parameter(
-        Name="cldnet/"+fqdn,
+        Name="/cldnet/"+fqdn,
         Value=json.dumps(json_data),
         Type='String',
         Description='in-use',
