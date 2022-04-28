@@ -87,4 +87,22 @@ resource "aws_iam_role" "lambda_role" {
         
         logger.info('SECURITY GROUP ID TO ATTACH TO THE ENI: {}'.format(mgmt_sg_id)) 
         
-/api/?type=op&cmd=<show><devices><summary></summary></devices></show>&key=        
+import requests
+import xml.etree.ElementTree as ET
+
+URL = "https://xxx/api/?type=op&cmd=<show><devices><summary></summary></devices></show>&key=xxx"
+
+r = requests.get(URL,verify=False)
+root = ET.fromstring(r.content)
+
+# for child in root.iter('*'):
+#     child.tag = child.text.encode('utf8')
+#     print(child.text)
+for child in root.iter('*'):
+    print(child.tag, child.attrib)
+
+# xmlDict = {}
+# for sitemap in root:
+#     children = sitemap.getchildren()
+#     xmlDict[children[0].text] = children[1].text
+# print (xmlDict)   
