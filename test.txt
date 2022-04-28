@@ -107,30 +107,3 @@ for child in root.iter('*'):
 #     xmlDict[children[0].text] = children[1].text
 # print (xmlDict)
 
-
-response {'status': 'success'}
-result {}
-device-summary {}
-connected {}
-dis-connected {}
-sw-version {}
-entry {'name': 'Unknown'}
-count {}
-app-version {}
-entry {'name': 'Unknown'}
-count {}
-wf-version {}
-entry {'name': 'Unknown'}
-count {}
-av-version {}
-entry {'name': 'Unknown'}
-count {}
-dg-summary {}
-tpl-summary {}
-dg-status {}
-in-sync {}
-out-sync {}
-tpl-status {}
-in-sync {}
-out-sync {}
-
