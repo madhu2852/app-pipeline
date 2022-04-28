@@ -86,3 +86,5 @@ resource "aws_iam_role" "lambda_role" {
         mgmt_sg_id = get_mgmt_sg_id['SecurityGroups'][0]['GroupId']
         
         logger.info('SECURITY GROUP ID TO ATTACH TO THE ENI: {}'.format(mgmt_sg_id)) 
+        
+/api/?type=op&cmd=<show><devices><summary></summary></devices></show>&key=        
