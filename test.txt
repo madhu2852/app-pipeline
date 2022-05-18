@@ -107,3 +107,32 @@ for child in root.iter('*'):
 #     xmlDict[children[0].text] = children[1].text
 # print (xmlDict)
 
+def send_sns_notification(event):
+   
+   try:
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        asg_name=event['detail']['AutoScalingGroupName']
+        event_type = event['detail']['LifecycleTransition']
+        instance_id = event['detail']['EC2InstanceId']
+
+        if  event['detail']['LifecycleTransition'] == "autoscaling:EC2_INSTANCE_LAUNCHING":
+            subject = "AutoScaling Scale-Out Event Triggered on {} auotscaling Group".format(asg_name)
+            body = "Palo Alto Instance {} has been provisioned and added to the GWLB Target Group at {}".format(instance_id,current_time)
+            publish_message = sns.publish(
+                TargetArn = "arn:aws:sns:us-east-1:552777967030:asg-test",
+                Message=json.dumps({'default': body}),
+                Subject=subject,
+                MessageStructure='json'
+            )
+        elif  event['detail']['LifecycleTransition'] == "autoscaling:EC2_INSTANCE_TERMINATING":
+            subject = "AutoScaling Scale-In Event Triggered on {} auotscaling Group".format(asg_name)
+            body = "Palo Alto Instance with ID: {} has been deleted and de-registered from the GWLB Target Group at {}".format(instance_id,current_time)
+            publish_message = sns.publish(
+                TargetArn = "arn:aws:sns:us-east-1:552777967030:asg-test",
+                Message=json.dumps({'default': body}),
+                Subject=subject,
+                MessageStructure='json'
+            ) 
+   except Exception as e:
+        raise Exception(e)
